@@ -1429,34 +1429,38 @@ function renderOv() {
   const estMin = pmMin+htT+trT+exT, estMax = pmMax+htT+trT+exT;
   const pmRemMin = Math.max(0,pmMin-pmT), pmRemMax = Math.max(0,pmMax-pmT);
 
+  const dual = mc !== hc;
+  const inok = v => dual ? `<div class="stat-sub" style="font-family:var(--font-mono);margin-top:1px">${hc}${Math.round(v*rate).toLocaleString()}</div>` : '';
+
   document.getElementById('ov-stats').innerHTML = `
-    <div class="stat-box"><div class="stat-lbl">Fixed costs</div><div class="stat-val">${mc}${Math.round(htT+trT)}</div><div class="stat-sub">hotels + travel</div></div>
-    <div class="stat-box"><div class="stat-lbl">Pocket spent</div><div class="stat-val">${mc}${Math.round(pmT)}</div><div class="stat-sub">day ${elapsed} of ${T.cfg.days}</div></div>
-    <div class="stat-box"><div class="stat-lbl">Extras budget</div><div class="stat-val">${mc}${Math.round(exT)}</div><div class="stat-sub">${(T.extras||[]).length} item${(T.extras||[]).length!==1?'s':''}</div></div>
-    <div class="stat-box"><div class="stat-lbl">Still to pay</div><div class="stat-val">${mc}${Math.round(htD+trD+exD)}</div><div class="stat-sub">all categories</div></div>`;
+    <div class="stat-box"><div class="stat-lbl">Fixed costs</div><div class="stat-val">${mc}${Math.round(htT+trT).toLocaleString()}</div><div class="stat-sub">hotels + travel</div>${inok(htT+trT)}</div>
+    <div class="stat-box"><div class="stat-lbl">Pocket spent</div><div class="stat-val">${mc}${Math.round(pmT).toLocaleString()}</div><div class="stat-sub">day ${elapsed} of ${T.cfg.days}</div>${inok(pmT)}</div>
+    <div class="stat-box"><div class="stat-lbl">Extras budget</div><div class="stat-val">${mc}${Math.round(exT).toLocaleString()}</div><div class="stat-sub">${(T.extras||[]).length} item${(T.extras||[]).length!==1?'s':''}</div>${inok(exT)}</div>
+    <div class="stat-box"><div class="stat-lbl">Still to pay</div><div class="stat-val">${mc}${Math.round(htD+trD+exD).toLocaleString()}</div><div class="stat-sub">all categories</div>${inok(htD+trD+exD)}</div>`;
 
   function pr(lbl, val, cls='', sub='') {
     return `<div class="proj-row${cls?' '+cls:''}"><div class="proj-lbl">${lbl}</div><div class="proj-val${cls?' '+cls:''}">${val}${sub?` <span style="font-size:10px;color:var(--c-text3)">${sub}</span>`:''}</div></div>`;
   }
+  const n = dual ? v => hc+Math.round(v*rate).toLocaleString() : () => '';
   document.getElementById('ov-est').innerHTML =
-    pr('Hotels', mc+Math.round(htT)) +
-    pr('Travel', mc+Math.round(trT)) +
-    pr('Extras <span class="badge-extra">outside daily</span>', mc+Math.round(exT)) +
-    pr('Pocket — min ('+mc+T.cfg.min+'/day × '+T.cfg.days+')', mc+Math.round(pmMin), 'ok') +
-    pr('Pocket — max ('+mc+T.cfg.max+'/day × '+T.cfg.days+')', mc+Math.round(pmMax), 'hi') +
+    pr('Hotels', mc+Math.round(htT).toLocaleString(), '', n(htT)) +
+    pr('Travel', mc+Math.round(trT).toLocaleString(), '', n(trT)) +
+    pr('Extras <span class="badge-extra">outside daily</span>', mc+Math.round(exT).toLocaleString(), '', n(exT)) +
+    pr('Pocket — min ('+mc+T.cfg.min+'/day × '+T.cfg.days+')', mc+Math.round(pmMin).toLocaleString(), 'ok', n(pmMin)) +
+    pr('Pocket — max ('+mc+T.cfg.max+'/day × '+T.cfg.days+')', mc+Math.round(pmMax).toLocaleString(), 'hi', n(pmMax)) +
     '<div class="proj-sep"></div>' +
-    pr('Total (min scenario)', mc+Math.round(estMin), 'total ok', hc+Math.round(estMin*rate).toLocaleString()) +
-    pr('Total (max scenario)', mc+Math.round(estMax), 'total hi', hc+Math.round(estMax*rate).toLocaleString());
+    pr('Total (min scenario)', mc+Math.round(estMin).toLocaleString(), 'total ok', n(estMin)) +
+    pr('Total (max scenario)', mc+Math.round(estMax).toLocaleString(), 'total hi', n(estMax));
 
   document.getElementById('ov-due').innerHTML =
-    pr('Hotels still to pay', mc+Math.round(htD), htD>0?'hi':'ok') +
-    pr('Travel still to pay', mc+Math.round(trD), trD>0?'hi':'ok') +
-    pr('Extras still to pay', mc+Math.round(exD), exD>0?'hi':'ok') +
-    pr('Pocket left (min)', mc+Math.round(pmRemMin), 'ok') +
-    pr('Pocket left (max)', mc+Math.round(pmRemMax), 'hi') +
+    pr('Hotels still to pay', mc+Math.round(htD).toLocaleString(), htD>0?'hi':'ok', n(htD)) +
+    pr('Travel still to pay', mc+Math.round(trD).toLocaleString(), trD>0?'hi':'ok', n(trD)) +
+    pr('Extras still to pay', mc+Math.round(exD).toLocaleString(), exD>0?'hi':'ok', n(exD)) +
+    pr('Pocket left (min)', mc+Math.round(pmRemMin).toLocaleString(), 'ok', n(pmRemMin)) +
+    pr('Pocket left (max)', mc+Math.round(pmRemMax).toLocaleString(), 'hi', n(pmRemMax)) +
     '<div class="proj-sep"></div>' +
-    pr('Total still to go (min)', mc+Math.round(htD+trD+exD+pmRemMin), 'total') +
-    pr('Total still to go (max)', mc+Math.round(htD+trD+exD+pmRemMax), 'total');
+    pr('Total still to go (min)', mc+Math.round(htD+trD+exD+pmRemMin).toLocaleString(), 'total', n(htD+trD+exD+pmRemMin)) +
+    pr('Total still to go (max)', mc+Math.round(htD+trD+exD+pmRemMax).toLocaleString(), 'total', n(htD+trD+exD+pmRemMax));
 
   const HCOLS=['#D85A30','#993C1D','#BA7517','#854F0B','#534AB7','#185FA5'];
   const TCOLS={Plane:'#4A7AB8',Ferry:'#185FA5',Taxi:'#7A4AB8',Train:'#1D9E75',Bus:'#0F6E56',Other:'#888780'};
