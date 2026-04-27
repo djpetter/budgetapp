@@ -947,16 +947,16 @@ const COMMON_CURS = ['EUR','NOK','USD','GBP','SEK','DKK','CHF','PLN'];
 // INIT
 // ══════════════════════════════════════════════════════════════
 function init() {
-  // URL and password are hardcoded — go straight to app
   hide('loading');
   loadFromServer()
-    .then(() => showTrips())
+    .then(() => { showTrips(); startAutoSync(); })
     .catch(e => {
       console.warn('Could not reach server, using local data:', e);
       const local = localStorage.getItem('fvb_local');
       if (local) { try { DB = JSON.parse(local); } catch(e){} }
       if (!Array.isArray(DB.trips)) DB.trips = [];
       showTrips();
+      startAutoSync();
     });
 }
 
@@ -1006,21 +1006,26 @@ function setSyncStatus(state, msg) {
 
 async function loadFromServer() {
   setSyncStatus('syncing', 'Syncing…');
-  const res = await apiFetch({ action: 'read' });
-  if (res.error) throw new Error(res.error);
-  if (res.data) DB = res.data;
-  else DB = { trips: [] };
-  if (!Array.isArray(DB.trips)) DB.trips = [];
-  setSyncStatus('ok', 'Synced ' + new Date().toLocaleTimeString());
-  isDirty = false;
+  try {
+    const res = await apiFetch({ action: 'load' });
+    if (res.error) throw new Error(res.error);
+    if (res.data) DB = res.data;
+    else DB = { trips: [] };
+    if (!Array.isArray(DB.trips)) DB.trips = [];
+    setSyncStatus('ok', 'Synced ' + new Date().toLocaleTimeString());
+    isDirty = false;
+  } catch(e) {
+    setSyncStatus('err', 'Sync failed — ' + e.message);
+    throw e;
+  }
 }
 
 async function saveToServer() {
   setSyncStatus('syncing', 'Saving…');
-  localStorage.setItem('fvb_local', JSON.stringify(DB)); // local backup
+  localStorage.setItem('fvb_local', JSON.stringify(DB));
   try {
-    const res = await apiFetch({ action: 'write', data: DB });
-    if (!res.ok) throw new Error(res.error);
+    const res = await apiFetch({ action: 'save', data: DB });
+    if (!res.ok) throw new Error(res.error || 'Write failed');
     setSyncStatus('ok', 'Saved ' + new Date().toLocaleTimeString());
     isDirty = false;
   } catch(e) {
@@ -1036,22 +1041,48 @@ function scheduleSave() {
 
 async function syncNow() {
   clearTimeout(syncTimer);
-  await loadFromServer();
-  if (T) {
-    const fresh = DB.trips.find(x => x.id === T.id);
-    if (fresh) { T = fresh; renderAll(); }
+  try {
+    await loadFromServer();
+    if (T) {
+      const fresh = DB.trips.find(x => x.id === T.id);
+      if (fresh) { T = fresh; renderAll(); }
+    }
+    renderTrips();
+  } catch(e) {
+    // status already set to err by loadFromServer
   }
-  renderTrips();
+}
+
+let autoSyncInterval = null;
+
+function startAutoSync() {
+  if (autoSyncInterval) return;
+  autoSyncInterval = setInterval(() => {
+    if (!isDirty) syncNow();
+  }, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !isDirty) syncNow();
+  });
 }
 
 async function apiFetch(body) {
   body.password = PASSWORD;
-  const r = await fetch(SCRIPT_URL, {
-    method: 'POST',
-    body: JSON.stringify(body),
-    headers: { 'Content-Type': 'text/plain' }  // avoid CORS preflight
-  });
-  return r.json();
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const r = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'text/plain' },
+      signal: ctrl.signal,
+    });
+    return r.json();
+  } catch(e) {
+    if (e.name === 'AbortError') throw new Error('Request timed out');
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
