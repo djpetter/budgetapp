@@ -544,6 +544,18 @@ body {
   transition: color 0.15s;
 }
 .del-btn:hover { color: var(--c-red); }
+.edit-btn {
+  background: none;
+  border: none;
+  color: var(--c-text3);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.edit-btn:hover { color: var(--c-accent); }
 
 /* ── PROGRESS BAR ─────────────────────────────────── */
 .pbar { height: 6px; background: var(--c-bg3); border-radius: 6px; overflow: hidden; margin: 6px 0 4px; }
@@ -966,6 +978,10 @@ let selDay = null;
 let openPayHt = {};
 let openPayTr = {};
 let openPayEx = {};
+let openEditHt = {};
+let openEditTr = {};
+let openEditEx = {};
+let openEditPm = {};
 let syncTimer = null;
 let isDirty = false;
 
@@ -1244,6 +1260,7 @@ function openTrip(id) {
   T = DB.trips.find(t => t.id === id);
   if (!T) return;
   selDay = null; openPayHt = {}; openPayTr = {}; openPayEx = {};
+  openEditHt = {}; openEditTr = {}; openEditEx = {}; openEditPm = {};
   hideAll(); show('s-app');
   document.getElementById('app-name').textContent = T.name;
   tab('ov', document.querySelector('.tab-btn'));
@@ -1431,12 +1448,14 @@ function renderOv() {
 
   const dual = mc !== hc;
   const inok = v => dual ? `<div class="stat-sub" style="font-family:var(--font-mono);margin-top:1px">${hc}${Math.round(v*rate).toLocaleString()}</div>` : '';
+  const remDays = Math.max(0, T.cfg.days - elapsed);
+  const remPocketMax = remDays * (T.cfg.max || 0);
 
   document.getElementById('ov-stats').innerHTML = `
     <div class="stat-box"><div class="stat-lbl">Fixed costs</div><div class="stat-val">${mc}${Math.round(htT+trT).toLocaleString()}</div><div class="stat-sub">hotels + travel</div>${inok(htT+trT)}</div>
     <div class="stat-box"><div class="stat-lbl">Pocket spent</div><div class="stat-val">${mc}${Math.round(pmT).toLocaleString()}</div><div class="stat-sub">day ${elapsed} of ${T.cfg.days}</div>${inok(pmT)}</div>
     <div class="stat-box"><div class="stat-lbl">Extras budget</div><div class="stat-val">${mc}${Math.round(exT).toLocaleString()}</div><div class="stat-sub">${(T.extras||[]).length} item${(T.extras||[]).length!==1?'s':''}</div>${inok(exT)}</div>
-    <div class="stat-box"><div class="stat-lbl">Still to pay</div><div class="stat-val">${mc}${Math.round(htD+trD+exD).toLocaleString()}</div><div class="stat-sub">all categories</div>${inok(htD+trD+exD)}</div>`;
+    <div class="stat-box"><div class="stat-lbl">Still to pay</div><div class="stat-val">${mc}${Math.round(htD+trD+exD).toLocaleString()}</div><div class="stat-sub">fixed costs</div>${inok(htD+trD+exD)}${remDays>0?`<div class="stat-sub" style="margin-top:5px;border-top:1px solid var(--c-border);padding-top:5px"><span style="font-family:var(--font-mono)">${mc}${Math.round(remPocketMax).toLocaleString()}</span> pocket (${remDays}d at max)</div>${dual?`<div class="stat-sub" style="font-family:var(--font-mono)">${hc}${Math.round(remPocketMax*rate).toLocaleString()}</div>`:''}`:''}</div>`;
 
   function pr(lbl, val, cls='', sub='') {
     return `<div class="proj-row${cls?' '+cls:''}"><div class="proj-lbl">${lbl}</div><div class="proj-val${cls?' '+cls:''}">${val}${sub?` <span style="font-size:10px;color:var(--c-text3)">${sub}</span>`:''}</div></div>`;
@@ -1522,7 +1541,7 @@ function renderPM() {
     const col = {ok:'#4A8C3F',warn:'#C47A2A',over:'#B84040',under:'#4A7AB8',empty:'#555'}[st];
     dbarEl.innerHTML = `<div style="position:relative;height:10px;border-radius:5px;background:var(--c-bg3);margin:8px 0 20px"><div style="position:absolute;width:${pMin}%;height:10px;background:var(--c-green-bg);border-radius:5px 0 0 5px"></div><div style="position:absolute;width:${pPct}%;height:8px;top:1px;background:${col};border-radius:4px;z-index:2"></div><div style="position:absolute;left:${pMin}%;width:1px;height:16px;top:-3px;background:var(--c-border2);z-index:3"></div><div style="position:absolute;left:${pMin}%;top:13px;font-size:9px;color:var(--c-text3);transform:translateX(-50%)">${mc+T.cfg.min}</div><div style="position:absolute;right:0;top:13px;font-size:9px;color:var(--c-text3)">${mc+T.cfg.max}</div></div><div style="font-size:11px;color:var(--c-text3);margin-bottom:6px">Spent <strong style="color:var(--c-text)">${mc+Math.round(dayAmt)}</strong> · target ${mc+T.cfg.min}–${mc+T.cfg.max}</div>`;
     dlistEl.innerHTML = dayExps.length
-      ? dayExps.map(e=>`<div class="item-row"><div class="item-main"><div class="item-name">${esc(e.desc)}</div></div><div class="item-amt">${e.cur&&e.cur!==mc?e.cur+e.amount+' ≈ ':''}<span style="font-family:var(--font-mono)">${mc+Math.round(toMain(e.amount,e.cur))}</span></div><button class="del-btn" onclick="delPM(${e.id})">✕</button></div>`)
+      ? dayExps.map(e=>`<div><div class="item-row"><div class="item-main"><div class="item-name">${esc(e.desc)}</div></div><div class="item-amt">${e.cur&&e.cur!==mc?e.cur+e.amount+' ≈ ':''}<span style="font-family:var(--font-mono)">${mc+Math.round(toMain(e.amount,e.cur))}</span></div><button class="edit-btn" onclick="toggleEdit('pm',${e.id})" title="Edit">✎</button><button class="del-btn" onclick="delPM(${e.id})">✕</button></div>${openEditPm[e.id]?editFormHTML_pm(e):''}</div>`)
         .join('')
       : '<div class="empty-state">No expenses this day</div>';
   } else {
@@ -1532,7 +1551,7 @@ function renderPM() {
 
   const all = [...(T.pocket||[])].sort((a,b)=>b.id-a.id);
   document.getElementById('pm-all').innerHTML = all.length
-    ? all.map(e=>`<div class="item-row"><div class="item-main"><div class="item-name">${esc(e.desc)}</div><div class="item-sub">${e.date||'—'}</div></div><div class="item-amt">${e.cur&&e.cur!==mc?e.cur+e.amount+' ≈ ':''}<span style="font-family:var(--font-mono)">${mc+Math.round(toMain(e.amount,e.cur))}</span></div><button class="del-btn" onclick="delPM(${e.id})">✕</button></div>`).join('')
+    ? all.map(e=>`<div><div class="item-row"><div class="item-main"><div class="item-name">${esc(e.desc)}</div><div class="item-sub">${e.date||'—'}</div></div><div class="item-amt">${e.cur&&e.cur!==mc?e.cur+e.amount+' ≈ ':''}<span style="font-family:var(--font-mono)">${mc+Math.round(toMain(e.amount,e.cur))}</span></div><button class="edit-btn" onclick="toggleEdit('pm',${e.id})" title="Edit">✎</button><button class="del-btn" onclick="delPM(${e.id})">✕</button></div>${openEditPm[e.id]?editFormHTML_pm(e):''}</div>`).join('')
     : '<div class="empty-state">No expenses yet</div>';
 
   // pre-fill today's date
@@ -1564,7 +1583,7 @@ function renderHt() {
     return `<div class="card">
       <div class="card-head">
         <div><div class="card-title">${esc(h.name)}</div><div style="font-size:11px;color:var(--c-text3);margin-top:2px">${h.nights} nights · ${h.cur||mc}${h.ppn}/night${h.checkin?' · check-in '+h.checkin:''}</div></div>
-        <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="del-btn" onclick="delHotel(${h.id})">✕</button></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="edit-btn" onclick="toggleEdit('ht',${h.id})" title="Edit">✎</button><button class="del-btn" onclick="delHotel(${h.id})">✕</button></div>
       </div>
       <div class="pbar"><div class="pfill" style="width:${pct}%;background:${pct>=100?'#4A8C3F':'#D85A30'}"></div></div>
       <div class="pbar-labels"><span style="color:#7EC870">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${due>0?'#E88888':'#7EC870'}">${due>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
@@ -1573,6 +1592,7 @@ function renderHt() {
         ${due>0?`<button class="btn-sm" onclick="togglePay('ht',${h.id})">+ Register payment</button>`:''}
       </div>
       ${payForm}
+      ${openEditHt[h.id] ? editFormHTML_hotel(h) : ''}
     </div>`;
   }).join('');
 }
@@ -1599,7 +1619,7 @@ function renderTr() {
     return `<div class="card">
       <div class="card-head">
         <div><div class="card-title">${esc(r.desc)}</div><div style="font-size:11px;color:var(--c-text3);margin-top:2px">${r.type}${r.date?' · '+r.date:''}</div></div>
-        <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="del-btn" onclick="delTravel(${r.id})">✕</button></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="edit-btn" onclick="toggleEdit('tr',${r.id})" title="Edit">✎</button><button class="del-btn" onclick="delTravel(${r.id})">✕</button></div>
       </div>
       <div class="pbar"><div class="pfill" style="width:${pct}%;background:${pct>=100?'#4A8C3F':'#4A7AB8'}"></div></div>
       <div class="pbar-labels"><span style="color:#7EC870">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${due>0?'#E88888':'#7EC870'}">${due>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
@@ -1608,6 +1628,7 @@ function renderTr() {
         ${due>0?`<button class="btn-sm" onclick="togglePay('tr',${r.id})">+ Register payment</button>`:''}
       </div>
       ${payForm}
+      ${openEditTr[r.id] ? editFormHTML_travel(r) : ''}
     </div>`;
   }).join('');
 }
@@ -1633,7 +1654,7 @@ function renderEx() {
     return `<div class="card">
       <div class="card-head">
         <div><div class="card-title">${esc(x.desc)}</div><div style="font-size:11px;color:var(--c-text3);margin-top:2px">${x.date?' · '+x.date:''}</div></div>
-        <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="del-btn" onclick="delExtra(${x.id})">✕</button></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="edit-btn" onclick="toggleEdit('ex',${x.id})" title="Edit">✎</button><button class="del-btn" onclick="delExtra(${x.id})">✕</button></div>
       </div>
       <div class="pbar"><div class="pfill" style="width:${pct}%;background:${pct>=100?'#4A8C3F':'#7A4AB8'}"></div></div>
       <div class="pbar-labels"><span style="color:#7EC870">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${due>0?'#E88888':'#7EC870'}">${due>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
@@ -1642,6 +1663,7 @@ function renderEx() {
         ${due>0?`<button class="btn-sm" onclick="togglePay('ex',${x.id})">+ Register payment</button>`:''}
       </div>
       ${payForm}
+      ${openEditEx[x.id] ? editFormHTML_extra(x) : ''}
     </div>`;
   }).join('');
 }
@@ -1659,6 +1681,85 @@ function payFormHTML(type, id) {
     </div>
     <div class="field"><label>Note (optional)</label><input type="text" id="pay-n-${id}" placeholder="e.g. Deposit" /></div>
     <button class="btn-sm accent" onclick="registerPay('${type}',${id})">Confirm payment</button>
+  </div>`;
+}
+
+function editFormHTML_hotel(h) {
+  const mc = T.cfg.cur||'EUR';
+  const curs = curList();
+  const curOpts = curs.map(c=>`<option${c===(h.cur||mc)?' selected':''}>${c}</option>`).join('');
+  return `<div class="pay-form-inline">
+    <div class="field"><label>Hotel name</label><input type="text" id="ehn-${h.id}" value="${esc(h.name)}" /></div>
+    <div class="field-row">
+      <div class="field"><label>Price per night</label><input type="number" id="ehppn-${h.id}" value="${h.ppn}" min="0" /></div>
+      <div class="field"><label>Currency</label><select id="ehc-${h.id}">${curOpts}</select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Nights</label><input type="number" id="ehni-${h.id}" value="${h.nights}" min="1" /></div>
+      <div class="field"><label>Check-in</label><input type="date" id="ehci-${h.id}" value="${h.checkin||''}" /></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-sm accent" onclick="saveEditHotel(${h.id})">Save</button>
+      <button class="btn-sm" onclick="toggleEdit('ht',${h.id})">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function editFormHTML_travel(r) {
+  const mc = T.cfg.cur||'EUR';
+  const curs = curList();
+  const curOpts = curs.map(c=>`<option${c===(r.cur||mc)?' selected':''}>${c}</option>`).join('');
+  const typeOpts = ['Plane','Ferry','Taxi','Train','Bus','Other'].map(t=>`<option${t===r.type?' selected':''}>${t}</option>`).join('');
+  return `<div class="pay-form-inline">
+    <div class="field"><label>Description</label><input type="text" id="etrd-${r.id}" value="${esc(r.desc)}" /></div>
+    <div class="field-row">
+      <div class="field"><label>Type</label><select id="etrt-${r.id}">${typeOpts}</select></div>
+      <div class="field"><label>Date</label><input type="date" id="etrdt-${r.id}" value="${r.date||''}" /></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Total cost</label><input type="number" id="etra-${r.id}" value="${r.cost}" min="0" /></div>
+      <div class="field"><label>Currency</label><select id="etrc-${r.id}">${curOpts}</select></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-sm accent" onclick="saveEditTravel(${r.id})">Save</button>
+      <button class="btn-sm" onclick="toggleEdit('tr',${r.id})">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function editFormHTML_extra(x) {
+  const mc = T.cfg.cur||'EUR';
+  const curs = curList();
+  const curOpts = curs.map(c=>`<option${c===(x.cur||mc)?' selected':''}>${c}</option>`).join('');
+  return `<div class="pay-form-inline">
+    <div class="field"><label>Description</label><input type="text" id="eexd-${x.id}" value="${esc(x.desc)}" /></div>
+    <div class="field-row">
+      <div class="field"><label>Budgeted cost</label><input type="number" id="eexa-${x.id}" value="${x.cost}" min="0" /></div>
+      <div class="field"><label>Currency</label><select id="eexc-${x.id}">${curOpts}</select></div>
+    </div>
+    <div class="field"><label>Date (optional)</label><input type="date" id="eexdt-${x.id}" value="${x.date||''}" /></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-sm accent" onclick="saveEditExtra(${x.id})">Save</button>
+      <button class="btn-sm" onclick="toggleEdit('ex',${x.id})">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function editFormHTML_pm(e) {
+  const mc = T.cfg.cur||'EUR';
+  const curs = curList();
+  const curOpts = curs.map(c=>`<option${c===(e.cur||mc)?' selected':''}>${c}</option>`).join('');
+  return `<div class="pay-form-inline">
+    <div class="field"><label>Description</label><input type="text" id="epmd-${e.id}" value="${esc(e.desc)}" /></div>
+    <div class="field-row">
+      <div class="field"><label>Amount</label><input type="number" id="epma-${e.id}" value="${e.amount}" min="0" step="0.01" /></div>
+      <div class="field"><label>Currency</label><select id="epmc-${e.id}">${curOpts}</select></div>
+    </div>
+    <div class="field"><label>Date</label><input type="date" id="epmdt-${e.id}" value="${e.date||''}" /></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-sm accent" onclick="saveEditPM(${e.id})">Save</button>
+      <button class="btn-sm" onclick="toggleEdit('pm',${e.id})">Cancel</button>
+    </div>
   </div>`;
 }
 
@@ -1766,6 +1867,59 @@ function registerPay(type, id) {
 function delHtPay(hid, pid) { const h=(T.hotels||[]).find(h=>h.id===hid); if(h) h.payments=(h.payments||[]).filter(p=>p.id!==pid); scheduleSave(); renderHt(); renderOv(); }
 function delTrPay(rid, pid) { const r=(T.travel||[]).find(r=>r.id===rid); if(r) r.payments=(r.payments||[]).filter(p=>p.id!==pid); scheduleSave(); renderTr(); renderOv(); }
 function delExPay(xid, pid) { const x=(T.extras||[]).find(x=>x.id===xid); if(x) x.payments=(x.payments||[]).filter(p=>p.id!==pid); scheduleSave(); renderEx(); renderOv(); }
+
+function toggleEdit(type, id) {
+  if (type==='ht') { openEditHt[id] = !openEditHt[id]; renderHt(); }
+  if (type==='tr') { openEditTr[id] = !openEditTr[id]; renderTr(); }
+  if (type==='ex') { openEditEx[id] = !openEditEx[id]; renderEx(); }
+  if (type==='pm') { openEditPm[id] = !openEditPm[id]; renderPM(); }
+}
+
+function saveEditHotel(id) {
+  const h = (T.hotels||[]).find(h=>h.id===id);
+  if (!h) return;
+  h.name    = document.getElementById('ehn-'+id).value.trim() || h.name;
+  h.ppn     = parseFloat(document.getElementById('ehppn-'+id).value) || h.ppn;
+  h.cur     = document.getElementById('ehc-'+id).value;
+  h.nights  = parseInt(document.getElementById('ehni-'+id).value)    || h.nights;
+  h.checkin = document.getElementById('ehci-'+id).value;
+  openEditHt[id] = false;
+  scheduleSave(); renderHt(); renderOv();
+}
+
+function saveEditTravel(id) {
+  const r = (T.travel||[]).find(r=>r.id===id);
+  if (!r) return;
+  r.desc = document.getElementById('etrd-'+id).value.trim()  || r.desc;
+  r.type = document.getElementById('etrt-'+id).value;
+  r.cost = parseFloat(document.getElementById('etra-'+id).value) || r.cost;
+  r.cur  = document.getElementById('etrc-'+id).value;
+  r.date = document.getElementById('etrdt-'+id).value;
+  openEditTr[id] = false;
+  scheduleSave(); renderTr(); renderOv();
+}
+
+function saveEditExtra(id) {
+  const x = (T.extras||[]).find(x=>x.id===id);
+  if (!x) return;
+  x.desc = document.getElementById('eexd-'+id).value.trim()   || x.desc;
+  x.cost = parseFloat(document.getElementById('eexa-'+id).value) || x.cost;
+  x.cur  = document.getElementById('eexc-'+id).value;
+  x.date = document.getElementById('eexdt-'+id).value;
+  openEditEx[id] = false;
+  scheduleSave(); renderEx(); renderOv();
+}
+
+function saveEditPM(id) {
+  const e = (T.pocket||[]).find(e=>e.id===id);
+  if (!e) return;
+  e.desc   = document.getElementById('epmd-'+id).value.trim()    || e.desc;
+  e.amount = parseFloat(document.getElementById('epma-'+id).value) || e.amount;
+  e.cur    = document.getElementById('epmc-'+id).value;
+  e.date   = document.getElementById('epmdt-'+id).value || e.date;
+  openEditPm[id] = false;
+  scheduleSave(); renderPM(); renderOv(); renderStatus();
+}
 
 function saveCfg() {
   const start = document.getElementById('cfg-start').value;
