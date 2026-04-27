@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Family Vacation Budget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── CONFIG ─────────────────────────────────────────── */
+/* Edit these two lines after deploying Apps Script:    */
+/* SCRIPT_URL = your deployed Apps Script Web App URL   */
+/* (password is entered by the user at login)           */
+
+:root {
+  --c-bg:       #0F0F0F;
+  --c-bg2:      #181818;
+  --c-bg3:      #222222;
+  --c-border:   #2A2A2A;
+  --c-border2:  #333333;
+  --c-text:     #F0EDE8;
+  --c-text2:    #9A9590;
+  --c-text3:    #5A5752;
+  --c-accent:   #D4A853;
+  --c-accent2:  #B88A3A;
+  --c-green:    #4A8C3F;
+  --c-green-bg: #1A2E18;
+  --c-orange:   #C47A2A;
+  --c-orange-bg:#2E2010;
+  --c-red:      #B84040;
+  --c-red-bg:   #2A1414;
+  --c-blue:     #4A7AB8;
+  --c-blue-bg:  #141E2E;
+  --c-purple:   #7A4AB8;
+  --c-purple-bg:#1E142E;
+  --radius:     10px;
+  --radius-sm:  6px;
+  --font-head:  'Syne', sans-serif;
+  --font-body:  'DM Sans', sans-serif;
+  --font-mono:  'DM Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ── SCREENS ──────────────────────────────────────── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ── LOGIN ────────────────────────────────────────── */
+#s-login {
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--c-bg);
+  position: relative;
+  overflow: hidden;
+}
+#s-login::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(212,168,83,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.login-box {
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+  z-index: 1;
+}
+.login-logo {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+.login-logo .icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+  filter: grayscale(0.2);
+}
+.login-logo h1 {
+  font-family: var(--font-head);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--c-text);
+}
+.login-logo p {
+  font-size: 13px;
+  color: var(--c-text2);
+  margin-top: 4px;
+}
+.login-field {
+  margin-bottom: 12px;
+}
+.login-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-text2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.login-field input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--c-bg2);
+  border: 1px solid var(--c-border2);
+  border-radius: var(--radius-sm);
+  color: var(--c-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.login-field input:focus { border-color: var(--c-accent); }
+.login-field input::placeholder { color: var(--c-text3); }
+.login-field small { display: block; font-size: 11px; color: var(--c-text3); margin-top: 5px; }
+.btn-primary {
+  width: 100%;
+  padding: 13px;
+  background: var(--c-accent);
+  color: #0F0F0F;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  margin-top: 8px;
+}
+.btn-primary:hover { background: var(--c-accent2); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-err {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--c-red-bg);
+  border: 1px solid var(--c-red);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: #E88888;
+  display: none;
+}
+.login-setup {
+  margin-top: 20px;
+  padding: 14px;
+  background: var(--c-bg2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--c-text3);
+  line-height: 1.7;
+}
+.login-setup code {
+  font-family: var(--font-mono);
+  background: var(--c-bg3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--c-accent);
+  font-size: 11px;
+}
+
+/* ── TRIPS SCREEN ─────────────────────────────────── */
+#s-trips {
+  padding: 0;
+}
+.trips-header {
+  padding: 1.25rem 1.25rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+.trips-header h1 {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.trips-header .meta {
+  font-size: 12px;
+  color: var(--c-text3);
+  margin-top: 2px;
+}
+.btn-sm {
+  padding: 7px 14px;
+  background: var(--c-bg3);
+  border: 1px solid var(--c-border2);
+  border-radius: var(--radius-sm);
+  color: var(--c-text2);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-sm:hover { background: var(--c-bg2); color: var(--c-text); border-color: var(--c-border2); }
+.btn-sm.accent { background: var(--c-accent); color: #0F0F0F; border-color: var(--c-accent); font-weight: 600; }
+.btn-sm.accent:hover { background: var(--c-accent2); }
+.btn-sm.danger { color: var(--c-red); }
+.btn-sm.danger:hover { background: var(--c-red-bg); border-color: var(--c-red); }
+
+.trip-card {
+  margin: 0 1.25rem 10px;
+  background: var(--c-bg2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 1rem 1.125rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+}
+.trip-card:hover { border-color: var(--c-border2); background: var(--c-bg3); }
+.trip-card.active-trip { border-color: var(--c-accent); }
+.trip-card .tc-head { display: flex; justify-content: space-between; align-items: flex-start; }
+.trip-card .tc-name { font-family: var(--font-head); font-size: 17px; font-weight: 600; }
+.trip-pill {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+.pill-active { background: var(--c-green-bg); color: #7EC870; border: 1px solid var(--c-green); }
+.pill-upcoming { background: var(--c-blue-bg); color: #7EB0E8; border: 1px solid var(--c-blue); }
+.pill-past { background: var(--c-bg3); color: var(--c-text3); border: 1px solid var(--c-border2); }
+.trip-card .tc-dates { font-size: 12px; color: var(--c-text2); margin-top: 4px; }
+.trip-card .tc-stats { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+.trip-card .tc-stat { font-size: 12px; color: var(--c-text3); }
+.trip-card .tc-stat strong { color: var(--c-text2); font-weight: 500; }
+.trips-section-label {
+  margin: 1rem 1.25rem 6px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--c-text3);
+}
+.trips-empty {
+  margin: 0.5rem 1.25rem;
+  padding: 1rem;
+  background: var(--c-bg2);
+  border: 1px dashed var(--c-border2);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--c-text3);
+  text-align: center;
+}
+.btn-logout {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--c-text3);
+  padding: 6px 10px;
+  transition: color 0.2s;
+}
+.btn-logout:hover { color: var(--c-text2); }
+
+/* ── MODAL ────────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--c-bg2);
+  border: 1px solid var(--c-border2);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal h2 { font-family: var(--font-head); font-size: 18px; font-weight: 700; margin-bottom: 1rem; }
+.modal-actions { display: flex; gap: 8px; margin-top: 1rem; }
+.modal-actions .btn-sm { flex: 1; text-align: center; padding: 10px; }
+
+/* ── FORM ELEMENTS ────────────────────────────────── */
+.field { margin-bottom: 12px; }
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-text2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 5px;
+}
+.field input, .field select {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--c-bg3);
+  border: 1px solid var(--c-border2);
+  border-radius: var(--radius-sm);
+  color: var(--c-text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.field input:focus, .field select:focus { border-color: var(--c-accent); }
+.field input::placeholder { color: var(--c-text3); }
+.field .hint { font-size: 11px; color: var(--c-text3); margin-top: 4px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+/* ── APP SCREEN ───────────────────────────────────── */
+#s-app { flex-direction: column; }
+
+.app-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--c-border);
+  gap: 10px;
+}
+.app-topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.app-trip-name {
+  font-family: var(--font-head);
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-trip-date { font-size: 11px; color: var(--c-text3); margin-top: 1px; }
+.btn-back {
+  background: none;
+  border: 1px solid var(--c-border2);
+  border-radius: var(--radius-sm);
+  color: var(--c-text3);
+  font-size: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-back:hover { color: var(--c-text); }
+
+/* ── STATUS CARDS ─────────────────────────────────── */
+.status-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px 1.25rem;
+}
+.scard {
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  border: 1px solid transparent;
+}
+.scard.ok   { background: var(--c-green-bg); border-color: var(--c-green); }
+.scard.warn { background: var(--c-orange-bg); border-color: var(--c-orange); }
+.scard.bad  { background: var(--c-red-bg); border-color: var(--c-red); }
+.scard.neutral { background: var(--c-bg2); border-color: var(--c-border); }
+.scard-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--c-text3); margin-bottom: 5px; }
+.scard.ok .scard-label { color: #7EC870; }
+.scard.warn .scard-label { color: #E8A870; }
+.scard.bad .scard-label { color: #E88888; }
+.scard-val { font-family: var(--font-mono); font-size: 20px; font-weight: 500; }
+.scard.ok .scard-val { color: #7EC870; }
+.scard.warn .scard-val { color: #E8A870; }
+.scard.bad .scard-val { color: #E88888; }
+.scard.neutral .scard-val { color: var(--c-text2); }
+.scard-sub { font-size: 10px; margin-top: 3px; color: var(--c-text3); }
+.scard.ok .scard-sub { color: rgba(126,200,112,0.7); }
+.scard.warn .scard-sub { color: rgba(232,168,112,0.7); }
+.scard.bad .scard-sub { color: rgba(232,136,136,0.7); }
+
+/* ── TABS ─────────────────────────────────────────── */
+.tabs-bar {
+  display: flex;
+  gap: 3px;
+  padding: 0 1.25rem 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--c-border);
+}
+.tabs-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  padding: 6px 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--c-text3);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.tab-btn:hover { color: var(--c-text2); }
+.tab-btn.on {
+  background: var(--c-bg3);
+  border-color: var(--c-border2);
+  color: var(--c-text);
+}
+
+.tab-content { display: none; padding: 1rem 1.25rem; flex: 1; overflow-y: auto; }
+.tab-content.on { display: block; }
+
+/* ── CARDS ────────────────────────────────────────── */
+.card {
+  background: var(--c-bg2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 1rem 1.125rem;
+  margin-bottom: 10px;
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.card-title { font-family: var(--font-head); font-size: 14px; font-weight: 600; }
+.card-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+.badge-ok     { background: var(--c-green-bg); color: #7EC870; border: 1px solid var(--c-green); }
+.badge-warn   { background: var(--c-orange-bg); color: #E8A870; border: 1px solid var(--c-orange); }
+.badge-over   { background: var(--c-red-bg); color: #E88888; border: 1px solid var(--c-red); }
+.badge-under  { background: var(--c-blue-bg); color: #7EB0E8; border: 1px solid var(--c-blue); }
+.badge-neutral{ background: var(--c-bg3); color: var(--c-text3); border: 1px solid var(--c-border2); }
+.badge-extra  { background: var(--c-purple-bg); color: #B87FE0; border: 1px solid var(--c-purple); font-size: 10px; padding: 2px 7px; border-radius: 20px; margin-left: 6px; }
+
+/* ── STAT GRID ────────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.stat-box {
+  background: var(--c-bg2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 11px 13px;
+}
+.stat-lbl { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--c-text3); margin-bottom: 4px; }
+.stat-val { font-family: var(--font-mono); font-size: 19px; font-weight: 500; color: var(--c-text); }
+.stat-sub { font-size: 11px; color: var(--c-text3); margin-top: 2px; }
+
+/* ── ROWS ─────────────────────────────────────────── */
+.item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--c-border);
+}
+.item-row:last-child { border-bottom: none; }
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.item-main { flex: 1; min-width: 0; }
+.item-name { font-size: 14px; color: var(--c-text); }
+.item-sub { font-size: 11px; color: var(--c-text3); margin-top: 1px; }
+.item-amt { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--c-text); white-space: nowrap; }
+.item-amt .hcur { font-size: 10px; color: var(--c-text3); display: block; text-align: right; margin-top: 1px; }
+.del-btn {
+  background: none;
+  border: none;
+  color: var(--c-text3);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.del-btn:hover { color: var(--c-red); }
+
+/* ── PROGRESS BAR ─────────────────────────────────── */
+.pbar { height: 6px; background: var(--c-bg3); border-radius: 6px; overflow: hidden; margin: 6px 0 4px; }
+.pfill { height: 100%; border-radius: 6px; transition: width 0.4s; }
+.pbar-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--c-text3); }
+
+/* ── PAYMENT CHIPS ────────────────────────────────── */
+.pay-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.pay-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--c-green-bg);
+  border: 1px solid var(--c-green);
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: #7EC870;
+}
+.pay-chip button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.6;
+  font-size: 11px;
+  line-height: 1;
+}
+.unpaid-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--c-orange-bg);
+  border: 1px solid var(--c-orange);
+  border-radius: 20px;
+  padding: 2px 9px;
+  font-size: 11px;
+  color: #E8A870;
+  margin-top: 4px;
+}
+
+/* ── DAY GRID ─────────────────────────────────────── */
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
+  gap: 5px;
+  margin-bottom: 4px;
+}
+.day-cell {
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.day-cell:hover { border-color: var(--c-border2); }
+.day-cell.sel { border-color: var(--c-accent) !important; border-width: 1.5px; }
+.day-num { font-size: 10px; color: var(--c-text3); margin-bottom: 1px; }
+.day-amt { font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+.day-ok .day-amt   { color: #7EC870; }
+.day-warn .day-amt { color: #E8A870; }
+.day-over .day-amt { color: #E88888; }
+.day-under .day-amt{ color: #7EB0E8; }
+.day-empty .day-amt{ color: var(--c-text3); }
+
+/* ── PROJ ROWS ────────────────────────────────────── */
+.proj-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--c-border);
+  font-size: 13px;
+}
+.proj-row:last-child { border-bottom: none; }
+.proj-lbl { color: var(--c-text2); }
+.proj-val { font-family: var(--font-mono); color: var(--c-text); font-weight: 500; }
+.proj-val.ok  { color: #7EC870; }
+.proj-val.hi  { color: #E8A870; }
+.proj-sep { height: 1px; background: var(--c-border2); margin: 6px 0; }
+.proj-row.total .proj-lbl { color: var(--c-text); font-weight: 600; font-family: var(--font-head); }
+.proj-row.total .proj-val { font-size: 15px; }
+
+/* ── SYNC BAR ─────────────────────────────────────── */
+.sync-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 1.25rem;
+  font-size: 11px;
+  color: var(--c-text3);
+  border-bottom: 1px solid var(--c-border);
+}
+.sync-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sync-dot.ok { background: var(--c-green); }
+.sync-dot.syncing { background: var(--c-accent); animation: pulse 1s infinite; }
+.sync-dot.err { background: var(--c-red); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── MISC ─────────────────────────────────────────── */
+.sep { height: 1px; background: var(--c-border); margin: 10px 0; }
+.empty-state { font-size: 13px; color: var(--c-text3); text-align: center; padding: 16px 0; }
+.info-box {
+  background: var(--c-bg3);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+  font-size: 12px;
+  color: var(--c-text3);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.pay-form-inline {
+  background: var(--c-bg3);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-top: 8px;
+}
+.pay-form-inline .field { margin-bottom: 8px; }
+.pay-form-inline .field:last-child { margin-bottom: 0; }
+select option { background: var(--c-bg3); }
+
+/* ── LOADING ──────────────────────────────────────── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--c-bg);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  gap: 12px;
+}
+.loading-overlay.active { display: flex; }
+.loading-overlay p { font-size: 13px; color: var(--c-text3); }
+.spinner {
+  width: 28px; height: 28px;
+  border: 2px solid var(--c-border2);
+  border-top-color: var(--c-accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay active" id="loading">
+  <div class="spinner"></div>
+  <p>Loading…</p>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div class="screen" id="s-login">
+  <div class="login-box">
+    <div class="login-logo">
+      <span class="icon">✈️</span>
+      <h1>Family Budget</h1>
+      <p>Track vacation spending together</p>
+    </div>
+    <div class="login-field">
+      <label>Script URL</label>
+      <input type="url" id="li-url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" />
+      <small>Your Google Apps Script deployment URL</small>
+    </div>
+    <div class="login-field">
+      <label>Family Password</label>
+      <input type="password" id="li-pw" placeholder="Enter shared password" />
+    </div>
+    <button class="btn-primary" id="li-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="li-err"></div>
+    <div class="login-setup">
+      <strong style="color:var(--c-text2)">First time setup?</strong><br>
+      1. Open <code>apps_script.js</code> → deploy as Web App in Google Apps Script<br>
+      2. Paste the URL above · set your password in the script<br>
+      3. Everyone uses the same URL + password
+    </div>
+  </div>
+</div>
+
+<!-- TRIPS SCREEN -->
+<div class="screen" id="s-trips">
+  <div class="trips-header">
+    <div>
+      <h1>Your Trips</h1>
+      <div class="meta" id="trips-meta">Loading…</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="btn-sm accent" onclick="openNewTrip()">+ New trip</button>
+      <button class="btn-logout" onclick="logout()">Sign out</button>
+    </div>
+  </div>
+  <div id="trips-list"></div>
+</div>
+
+<!-- APP SCREEN -->
+<div class="screen" id="s-app">
+  <div class="app-topbar">
+    <div class="app-topbar-left">
+      <button class="btn-back" onclick="goTrips()">← Trips</button>
+      <div>
+        <div class="app-trip-name" id="app-name">—</div>
+        <div class="app-trip-date" id="app-dates">—</div>
+      </div>
+    </div>
+    <button class="btn-sm" onclick="syncNow()" id="sync-btn">↻ Sync</button>
+  </div>
+
+  <div class="sync-bar">
+    <div class="sync-dot neutral" id="sync-dot"></div>
+    <span id="sync-status">Not synced yet</span>
+  </div>
+
+  <div class="status-row">
+    <div class="scard neutral" id="sb-min">
+      <div class="scard-label">Min budget</div>
+      <div class="scard-val" id="sb-min-v">—</div>
+      <div class="scard-sub" id="sb-min-s">pocket money only</div>
+    </div>
+    <div class="scard neutral" id="sb-max">
+      <div class="scard-label">Max budget</div>
+      <div class="scard-val" id="sb-max-v">—</div>
+      <div class="scard-sub" id="sb-max-s">pocket money only</div>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    <button class="tab-btn on" onclick="tab('ov',this)">Overview</button>
+    <button class="tab-btn" onclick="tab('pm',this)">Daily</button>
+    <button class="tab-btn" onclick="tab('ht',this)">Hotels</button>
+    <button class="tab-btn" onclick="tab('tr',this)">Travel</button>
+    <button class="tab-btn" onclick="tab('ex',this)">Extras</button>
+    <button class="tab-btn" onclick="tab('cfg',this)">Settings</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="tab-content on" id="t-ov">
+    <div class="stat-grid" id="ov-stats"></div>
+    <div class="card"><div class="card-head"><span class="card-title">Estimated trip cost</span></div><div id="ov-est"></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">Still to pay</span></div><div id="ov-due"></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">Hotels</span></div><div id="ov-ht"></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">Travel</span></div><div id="ov-tr"></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">Extras</span><span class="badge-extra">outside daily budget</span></div><div id="ov-ex"></div></div>
+  </div>
+
+  <!-- DAILY -->
+  <div class="tab-content" id="t-pm">
+    <div class="stat-grid" style="margin-bottom:10px">
+      <div class="stat-box"><div class="stat-lbl">Today</div><div class="stat-val" id="pm-today">—</div><div class="stat-sub" id="pm-today-s">—</div></div>
+      <div class="stat-box"><div class="stat-lbl">Total spent</div><div class="stat-val" id="pm-total">—</div><div class="stat-sub" id="pm-total-s">—</div></div>
+      <div class="stat-box"><div class="stat-lbl">Daily target</div><div class="stat-val" id="pm-goal">—</div><div class="stat-sub">min – max</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">Add expense</span></div>
+      <div class="field"><label>Description</label><input type="text" id="pm-d" placeholder="e.g. Beach lunch" /></div>
+      <div class="field-row">
+        <div class="field"><label>Amount</label><input type="number" id="pm-a" placeholder="0" min="0" step="0.01" /></div>
+        <div class="field"><label>Currency</label><select id="pm-c"></select></div>
+      </div>
+      <div class="field"><label>Date</label><input type="date" id="pm-dt" /></div>
+      <button class="btn-sm accent" style="width:100%;padding:9px;margin-top:4px;text-align:center" onclick="addPM()">+ Add expense</button>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title" id="dg-title">All days</span></div>
+      <div class="day-grid" id="day-grid"></div>
+    </div>
+    <div class="card" id="day-detail">
+      <div class="card-head"><span class="card-title" id="dd-title">Select a day above</span><span id="dd-badge"></span></div>
+      <div id="dd-bar"></div>
+      <div id="dd-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">All expenses</span></div>
+      <div id="pm-all"></div>
+    </div>
+  </div>
+
+  <!-- HOTELS -->
+  <div class="tab-content" id="t-ht">
+    <div class="stat-grid" style="margin-bottom:10px">
+      <div class="stat-box"><div class="stat-lbl">Total cost</div><div class="stat-val" id="ht-tot">—</div><div class="stat-sub" id="ht-nights">—</div></div>
+      <div class="stat-box"><div class="stat-lbl">Paid</div><div class="stat-val" id="ht-paid">—</div><div class="stat-sub">confirmed</div></div>
+      <div class="stat-box"><div class="stat-lbl">Still to pay</div><div class="stat-val" id="ht-due">—</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">Add hotel</span></div>
+      <div class="field"><label>Hotel name</label><input type="text" id="hn" placeholder="e.g. Naxos Palace" /></div>
+      <div class="field-row">
+        <div class="field"><label>Price per night</label><input type="number" id="hppn" placeholder="0" min="0" /></div>
+        <div class="field"><label>Currency</label><select id="hc"></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Nights</label><input type="number" id="hni" placeholder="7" min="1" /></div>
+        <div class="field"><label>Check-in</label><input type="date" id="hci" /></div>
+      </div>
+      <button class="btn-sm accent" style="width:100%;padding:9px;margin-top:4px;text-align:center" onclick="addHotel()">+ Add hotel</button>
+    </div>
+    <div id="ht-list"></div>
+  </div>
+
+  <!-- TRAVEL -->
+  <div class="tab-content" id="t-tr">
+    <div class="stat-grid" style="margin-bottom:10px">
+      <div class="stat-box"><div class="stat-lbl">Total cost</div><div class="stat-val" id="tr-tot">—</div><div class="stat-sub" id="tr-cnt">—</div></div>
+      <div class="stat-box"><div class="stat-lbl">Paid</div><div class="stat-val" id="tr-paid">—</div></div>
+      <div class="stat-box"><div class="stat-lbl">Still to pay</div><div class="stat-val" id="tr-due">—</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">Add travel item</span></div>
+      <div class="field"><label>Description</label><input type="text" id="trd" placeholder="e.g. Oslo → Athens" /></div>
+      <div class="field-row">
+        <div class="field"><label>Type</label><select id="trt"><option>Plane</option><option>Ferry</option><option>Taxi</option><option>Train</option><option>Bus</option><option>Other</option></select></div>
+        <div class="field"><label>Date</label><input type="date" id="trdt" /></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Total cost</label><input type="number" id="tra" placeholder="0" min="0" /></div>
+        <div class="field"><label>Currency</label><select id="trc"></select></div>
+      </div>
+      <button class="btn-sm accent" style="width:100%;padding:9px;margin-top:4px;text-align:center" onclick="addTravel()">+ Add travel item</button>
+    </div>
+    <div id="tr-list"></div>
+  </div>
+
+  <!-- EXTRAS -->
+  <div class="tab-content" id="t-ex">
+    <div class="stat-grid" style="margin-bottom:10px">
+      <div class="stat-box"><div class="stat-lbl">Total budget</div><div class="stat-val" id="ex-tot">—</div><div class="stat-sub">set aside</div></div>
+      <div class="stat-box"><div class="stat-lbl">Paid / booked</div><div class="stat-val" id="ex-paid">—</div></div>
+      <div class="stat-box"><div class="stat-lbl">Still to pay</div><div class="stat-val" id="ex-due">—</div></div>
+    </div>
+    <div class="info-box">Extras (excursions, experiences) count toward trip total but <strong style="color:var(--c-text2)">do not</strong> affect your daily min/max budget status.</div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">Add extra</span></div>
+      <div class="field"><label>Description</label><input type="text" id="exd" placeholder="e.g. Island boat tour" /></div>
+      <div class="field-row">
+        <div class="field"><label>Budgeted cost</label><input type="number" id="exa" placeholder="0" min="0" /></div>
+        <div class="field"><label>Currency</label><select id="exc"></select></div>
+      </div>
+      <div class="field"><label>Date (optional)</label><input type="date" id="exdt" /></div>
+      <button class="btn-sm accent" style="width:100%;padding:9px;margin-top:4px;text-align:center" onclick="addExtra()">+ Add extra</button>
+    </div>
+    <div id="ex-list"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="tab-content" id="t-cfg">
+    <div class="card">
+      <div class="card-head"><span class="card-title">Trip details</span></div>
+      <div class="field"><label>Trip name</label><input type="text" id="cfg-name" placeholder="Naxos 2025" /></div>
+      <div class="field-row">
+        <div class="field"><label>Start date</label><input type="date" id="cfg-start" onchange="updateDaysHint()" /></div>
+        <div class="field"><label>End date</label><input type="date" id="cfg-end" onchange="updateDaysHint()" /></div>
+      </div>
+      <div class="field"><label></label><div class="hint" id="days-hint" style="font-size:12px;color:var(--c-text2);padding:6px 10px;background:var(--c-bg3);border-radius:var(--radius-sm)">Select dates to see trip length</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">Daily pocket money targets</span></div>
+      <div class="info-box" style="margin-bottom:8px">Hotels, travel and extras are tracked separately — they never count against this.</div>
+      <div class="field-row">
+        <div class="field"><label>Min per day</label><input type="number" id="cfg-min" placeholder="200" /></div>
+        <div class="field"><label>Max per day</label><input type="number" id="cfg-max" placeholder="300" /></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">Currencies</span></div>
+      <div class="field-row">
+        <div class="field"><label>Trip currency</label><input type="text" id="cfg-cur" placeholder="EUR" maxlength="4" style="text-transform:uppercase" /></div>
+        <div class="field"><label>Home currency</label><input type="text" id="cfg-hcur" placeholder="NOK" maxlength="4" style="text-transform:uppercase" /></div>
+      </div>
+      <div class="field"><label>Exchange rate (1 trip cur = ? home cur)</label><input type="number" id="cfg-rate" placeholder="11.8" step="0.01" /></div>
+      <div class="info-box" style="margin-bottom:0">Extra currencies (e.g. GBP, USD) can be entered per expense. They convert to trip currency using the same rate for display.</div>
+    </div>
+    <button class="btn-sm accent" style="width:100%;padding:11px;text-align:center;margin-bottom:10px;font-size:14px" onclick="saveCfg()">Save settings</button>
+    <div class="card">
+      <div class="card-head"><span class="card-title" style="color:var(--c-red)">Danger zone</span></div>
+      <button class="btn-sm danger" style="width:100%;text-align:center;padding:9px" onclick="deleteTrip()">Delete this trip</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW TRIP MODAL -->
+<div class="modal-overlay" id="m-newtrip">
+  <div class="modal">
+    <h2>New trip</h2>
+    <div class="field"><label>Trip name</label><input type="text" id="nt-name" placeholder="Naxos Summer 2025" /></div>
+    <div class="field-row">
+      <div class="field"><label>Start date</label><input type="date" id="nt-start" onchange="ntDays()" /></div>
+      <div class="field"><label>End date</label><input type="date" id="nt-end" onchange="ntDays()" /></div>
+    </div>
+    <div class="field"><label></label><div class="hint" id="nt-hint" style="font-size:12px;color:var(--c-text2);padding:6px 10px;background:var(--c-bg3);border-radius:var(--radius-sm)">Select dates</div></div>
+    <div class="field-row">
+      <div class="field"><label>Trip currency</label><input type="text" id="nt-cur" placeholder="EUR" maxlength="4" style="text-transform:uppercase" value="EUR" /></div>
+      <div class="field"><label>Home currency</label><input type="text" id="nt-hcur" placeholder="NOK" maxlength="4" style="text-transform:uppercase" value="NOK" /></div>
+    </div>
+    <div class="field"><label>Exchange rate</label><input type="number" id="nt-rate" placeholder="11.8" step="0.01" value="11.8" /></div>
+    <div class="field-row">
+      <div class="field"><label>Min/day (pocket)</label><input type="number" id="nt-min" placeholder="200" value="200" /></div>
+      <div class="field"><label>Max/day (pocket)</label><input type="number" id="nt-max" placeholder="300" value="300" /></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="closeModal('m-newtrip')">Cancel</button>
+      <button class="btn-sm accent" onclick="createTrip()">Create trip</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONFIG — will be set from localStorage after login
+// ══════════════════════════════════════════════════════════════
+let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw6RKVd3H-XYom1_gvpTo6lH8WK-dyEdhzfSQyqKDJZtB6TRo8KhN6LgW7-auzAWANj/exec';
+let PASSWORD = 'SummerDream2';
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let DB = { trips: [] };   // full database
+let T = null;             // current trip
+let selDay = null;
+let openPayHt = {};
+let openPayTr = {};
+let openPayEx = {};
+let syncTimer = null;
+let isDirty = false;
+
+// Known currencies — trip cur + home cur + these commons
+const COMMON_CURS = ['EUR','NOK','USD','GBP','SEK','DKK','CHF','PLN'];
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+function init() {
+  // URL and password are hardcoded — go straight to app
+  hide('loading');
+  loadFromServer()
+    .then(() => showTrips())
+    .catch(e => {
+      console.warn('Could not reach server, using local data:', e);
+      const local = localStorage.getItem('fvb_local');
+      if (local) { try { DB = JSON.parse(local); } catch(e){} }
+      if (!Array.isArray(DB.trips)) DB.trips = [];
+      showTrips();
+    });
+}
+
+// ══════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════
+async function doLogin() {
+  const url = document.getElementById('li-url').value.trim();
+  const pw  = document.getElementById('li-pw').value.trim();
+  if (!url || !pw) { showErr('Please fill in both fields'); return; }
+  const btn = document.getElementById('li-btn');
+  btn.disabled = true; btn.textContent = 'Connecting…';
+  showErr('');
+  try {
+    SCRIPT_URL = url; PASSWORD = pw;
+    await loadFromServer();
+    localStorage.setItem('fvb_auth', JSON.stringify({url, pw}));
+    btn.disabled = false; btn.textContent = 'Sign In';
+    showTrips();
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Sign In';
+    SCRIPT_URL = ''; PASSWORD = '';
+    showErr(e.message || 'Could not connect. Check URL and password.');
+  }
+}
+function showErr(msg) {
+  const el = document.getElementById('li-err');
+  el.textContent = msg; el.style.display = msg ? 'block' : 'none';
+}
+function logout() {
+  localStorage.removeItem('fvb_auth');
+  SCRIPT_URL = ''; PASSWORD = '';
+  DB = {trips:[]}; T = null;
+  hideAll(); show('s-login');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SERVER SYNC
+// ══════════════════════════════════════════════════════════════
+function setSyncStatus(state, msg) {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-status');
+  if (!dot) return;
+  dot.className = 'sync-dot ' + state;
+  txt.textContent = msg;
+}
+
+async function loadFromServer() {
+  setSyncStatus('syncing', 'Syncing…');
+  const res = await apiFetch({ action: 'read' });
+  if (res.error) throw new Error(res.error);
+  if (res.data) DB = res.data;
+  else DB = { trips: [] };
+  if (!Array.isArray(DB.trips)) DB.trips = [];
+  setSyncStatus('ok', 'Synced ' + new Date().toLocaleTimeString());
+  isDirty = false;
+}
+
+async function saveToServer() {
+  setSyncStatus('syncing', 'Saving…');
+  localStorage.setItem('fvb_local', JSON.stringify(DB)); // local backup
+  try {
+    const res = await apiFetch({ action: 'write', data: DB });
+    if (!res.ok) throw new Error(res.error);
+    setSyncStatus('ok', 'Saved ' + new Date().toLocaleTimeString());
+    isDirty = false;
+  } catch(e) {
+    setSyncStatus('err', 'Save failed — ' + e.message);
+  }
+}
+
+function scheduleSave() {
+  isDirty = true;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(saveToServer, 2000);
+}
+
+async function syncNow() {
+  clearTimeout(syncTimer);
+  await loadFromServer();
+  if (T) {
+    const fresh = DB.trips.find(x => x.id === T.id);
+    if (fresh) { T = fresh; renderAll(); }
+  }
+  renderTrips();
+}
+
+async function apiFetch(body) {
+  body.password = PASSWORD;
+  const r = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'text/plain' }  // avoid CORS preflight
+  });
+  return r.json();
+}
+
+// ══════════════════════════════════════════════════════════════
+// TRIP MANAGEMENT
+// ══════════════════════════════════════════════════════════════
+function showTrips() {
+  hideAll(); show('s-trips'); renderTrips();
+}
+
+function renderTrips() {
+  const el = document.getElementById('trips-list');
+  const meta = document.getElementById('trips-meta');
+  const trips = DB.trips || [];
+  meta.textContent = trips.length + ' trip' + (trips.length !== 1 ? 's' : '');
+
+  if (!trips.length) {
+    el.innerHTML = '<div class="trips-empty">No trips yet. Create your first one!</div>';
+    return;
+  }
+
+  const now = new Date(); now.setHours(0,0,0,0);
+  const active=[], upcoming=[], past=[];
+  trips.forEach(t => {
+    const s = t.cfg.start ? new Date(t.cfg.start) : null;
+    const e = t.cfg.end   ? new Date(t.cfg.end)   : null;
+    if (!s) { upcoming.push(t); return; }
+    if (e && e < now) past.push(t);
+    else if (s > now) upcoming.push(t);
+    else active.push(t);
+  });
+
+  let html = '';
+  if (active.length) {
+    html += '<div class="trips-section-label">Active</div>';
+    html += active.map(t => tripCard(t, 'active')).join('');
+  }
+  if (upcoming.length) {
+    html += '<div class="trips-section-label">Upcoming</div>';
+    html += upcoming.map(t => tripCard(t, 'upcoming')).join('');
+  }
+  if (past.length) {
+    html += '<div class="trips-section-label">Past trips</div>';
+    html += past.map(t => tripCard(t, 'past')).join('');
+  }
+  el.innerHTML = html;
+}
+
+function tripCard(t, status) {
+  const pillCls = {active:'pill-active', upcoming:'pill-upcoming', past:'pill-past'}[status];
+  const pillTxt = {active:'Active', upcoming:'Upcoming', past:'Past'}[status];
+  const pm = pmTotalForTrip(t);
+  const ht = htTotalForTrip(t);
+  const tr = trTotalForTrip(t);
+  const ex = exTotalForTrip(t);
+  const cur = t.cfg.cur || 'EUR';
+  const dates = (t.cfg.start && t.cfg.end)
+    ? fmtDate(t.cfg.start) + ' – ' + fmtDate(t.cfg.end) + ' · ' + t.cfg.days + ' days'
+    : 'Dates not set';
+  return `<div class="trip-card" onclick="openTrip('${t.id}')">
+    <div class="tc-head">
+      <div class="tc-name">${esc(t.name)}</div>
+      <span class="trip-pill ${pillCls}">${pillTxt}</span>
+    </div>
+    <div class="tc-dates">${dates}</div>
+    <div class="tc-stats">
+      <div class="tc-stat"><strong>${cur}${Math.round(pm+ht+tr+ex)}</strong> total</div>
+      <div class="tc-stat"><strong>${cur}${Math.round(ht+tr)}</strong> fixed</div>
+      <div class="tc-stat"><strong>${cur}${Math.round(pm)}</strong> pocket</div>
+      ${ex > 0 ? `<div class="tc-stat"><strong>${cur}${Math.round(ex)}</strong> extras</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function openNewTrip() { openModal('m-newtrip'); }
+
+function ntDays() {
+  const s = document.getElementById('nt-start').value;
+  const e = document.getElementById('nt-end').value;
+  document.getElementById('nt-hint').textContent = calcDaysLabel(s, e);
+}
+
+function createTrip() {
+  const name = document.getElementById('nt-name').value.trim();
+  if (!name) { alert('Please enter a trip name'); return; }
+  const start = document.getElementById('nt-start').value;
+  const end   = document.getElementById('nt-end').value;
+  const days  = calcDays(start, end) || 7;
+  const trip = {
+    id: 'trip_' + Date.now(),
+    name,
+    cfg: {
+      start, end, days,
+      min:  parseFloat(document.getElementById('nt-min').value)  || 200,
+      max:  parseFloat(document.getElementById('nt-max').value)  || 300,
+      cur:  (document.getElementById('nt-cur').value  || 'EUR').toUpperCase(),
+      hcur: (document.getElementById('nt-hcur').value || 'NOK').toUpperCase(),
+      rate: parseFloat(document.getElementById('nt-rate').value) || 11.8
+    },
+    pocket: [], hotels: [], travel: [], extras: []
+  };
+  DB.trips.push(trip);
+  scheduleSave();
+  closeModal('m-newtrip');
+  openTrip(trip.id);
+}
+
+function openTrip(id) {
+  T = DB.trips.find(t => t.id === id);
+  if (!T) return;
+  selDay = null; openPayHt = {}; openPayTr = {}; openPayEx = {};
+  hideAll(); show('s-app');
+  document.getElementById('app-name').textContent = T.name;
+  tab('ov', document.querySelector('.tab-btn'));
+  renderAll();
+}
+
+function goTrips() {
+  if (isDirty) saveToServer();
+  hideAll(); show('s-trips'); renderTrips();
+}
+
+function deleteTrip() {
+  if (!T) return;
+  if (!confirm('Delete "' + T.name + '"? This cannot be undone.')) return;
+  DB.trips = DB.trips.filter(t => t.id !== T.id);
+  T = null;
+  scheduleSave();
+  goTrips();
+}
+
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+function calcDays(s, e) {
+  if (!s || !e) return 0;
+  return Math.max(0, Math.round((new Date(e) - new Date(s)) / 864e5) + 1);
+}
+function calcDaysLabel(s, e) {
+  const d = calcDays(s, e);
+  if (!d) return 'Select start and end date';
+  return 'Trip length: ' + d + ' day' + (d !== 1 ? 's' : '');
+}
+function updateDaysHint() {
+  document.getElementById('days-hint').textContent =
+    calcDaysLabel(document.getElementById('cfg-start').value, document.getElementById('cfg-end').value);
+}
+function fmtDate(iso) {
+  if (!iso) return '?';
+  return new Date(iso).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+}
+function fmtDateShort(iso) {
+  if (!iso) return '?';
+  return new Date(iso).toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+}
+function dayISO(i) {
+  if (!T.cfg.start) return null;
+  const d = new Date(T.cfg.start); d.setDate(d.getDate() + i);
+  return d.toISOString().split('T')[0];
+}
+function dayLabel(i) {
+  if (!T.cfg.start) return 'D' + (i + 1);
+  const d = new Date(T.cfg.start); d.setDate(d.getDate() + i);
+  return d.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+}
+function daysElapsed() {
+  if (!T.cfg.start) return 0;
+  const s = new Date(T.cfg.start); s.setHours(0,0,0,0);
+  const n = new Date(); n.setHours(0,0,0,0);
+  return Math.max(0, Math.min(Math.floor((n-s)/864e5)+1, T.cfg.days));
+}
+function nid(arr) { return arr.length ? Math.max(...arr.map(x=>x.id)) + 1 : 1; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Currency & amount display
+function curList() {
+  const curs = new Set(COMMON_CURS);
+  if (T) { curs.add(T.cfg.cur || 'EUR'); curs.add(T.cfg.hcur || 'NOK'); }
+  return [...curs].sort();
+}
+function toMain(amt, cur) {
+  const mc = (T.cfg.cur || 'EUR').toUpperCase();
+  const hc = (T.cfg.hcur || 'NOK').toUpperCase();
+  const rate = T.cfg.rate || 1;
+  cur = (cur || mc).toUpperCase();
+  if (cur === mc) return amt;
+  if (cur === hc) return amt / rate;
+  return amt; // other currencies treated as trip currency
+}
+function fmt(amt, cur) {
+  const mc = T ? (T.cfg.cur || 'EUR') : 'EUR';
+  const hc = T ? (T.cfg.hcur || 'NOK') : 'NOK';
+  const rate = T ? (T.cfg.rate || 1) : 1;
+  cur = cur || mc;
+  const mainAmt = toMain(amt, cur);
+  const homeAmt = Math.round(mainAmt * rate);
+  let s = cur.toUpperCase() + Math.round(mainAmt);
+  if (cur.toUpperCase() !== mc.toUpperCase()) s = cur + Math.round(amt) + ' ≈ ' + mc + Math.round(mainAmt);
+  return { main: mc + Math.round(mainAmt), home: hc + homeAmt.toLocaleString(), orig: s };
+}
+function mainCur(a) { return fmt(a).main; }
+
+// Totals
+function pmTotalForTrip(t) { return (t.pocket||[]).reduce((s,e) => s + toMainForTrip(e.amount, e.cur, t), 0); }
+function htTotalForTrip(t) { return (t.hotels||[]).reduce((s,h) => s + toMainForTrip(h.ppn * h.nights, h.cur, t), 0); }
+function trTotalForTrip(t) { return (t.travel||[]).reduce((s,r) => s + toMainForTrip(r.cost, r.cur, t), 0); }
+function exTotalForTrip(t) { return (t.extras||[]).reduce((s,x) => s + toMainForTrip(x.cost, x.cur, t), 0); }
+function toMainForTrip(amt, cur, t) {
+  const mc = (t.cfg.cur||'EUR').toUpperCase();
+  const hc = (t.cfg.hcur||'NOK').toUpperCase();
+  const rate = t.cfg.rate || 1;
+  cur = (cur||mc).toUpperCase();
+  if (cur === mc) return amt;
+  if (cur === hc) return amt / rate;
+  return amt;
+}
+function payTotal(arr) { return (arr||[]).reduce((s,p) => s + toMain(p.amount, p.cur), 0); }
+
+function dayStatus(amt) {
+  if (amt === 0) return 'empty';
+  if (amt < T.cfg.min) return 'under';
+  if (amt <= T.cfg.max) return 'ok';
+  if (amt <= T.cfg.max * 1.05) return 'warn';
+  return 'over';
+}
+
+function populateCurSelects() {
+  const curs = curList();
+  const mc = T.cfg.cur || 'EUR';
+  ['pm-c','hc','trc','exc'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = curs.map(c => `<option${c===mc?' selected':''}>${c}</option>`).join('');
+    if (prev && curs.includes(prev)) el.value = prev;
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════
+function renderAll() {
+  if (!T) return;
+  populateCurSelects();
+  // dates bar
+  const d = daysElapsed();
+  document.getElementById('app-dates').textContent = T.cfg.start && T.cfg.end
+    ? fmtDateShort(T.cfg.start) + ' – ' + fmtDateShort(T.cfg.end) + ' · day ' + d + ' of ' + T.cfg.days
+    : 'Dates not set';
+  renderStatus();
+  renderOv();
+  renderPM();
+  renderHt();
+  renderTr();
+  renderEx();
+  renderCfg();
+}
+
+function renderStatus() {
+  const elapsed = daysElapsed();
+  const pmT = (T.pocket||[]).reduce((s,e) => s + toMain(e.amount, e.cur), 0);
+  const minT = T.cfg.min * elapsed;
+  const maxT = T.cfg.max * elapsed;
+  const mc = T.cfg.cur || 'EUR';
+
+  function setCard(elId, valId, subId, spent, target, label) {
+    const el = document.getElementById(elId);
+    ['ok','warn','bad','neutral'].forEach(c => el.classList.remove(c));
+    if (elapsed === 0) { el.classList.add('neutral'); document.getElementById(valId).textContent = '—'; document.getElementById(subId).textContent = 'Not started'; return; }
+    const diff = spent - target;
+    const pct = target > 0 ? Math.abs(diff/target)*100 : 0;
+    if (spent <= target) { el.classList.add('ok'); document.getElementById(valId).textContent = mc+Math.round(Math.abs(diff))+' under'; }
+    else if (pct <= 5)   { el.classList.add('warn'); document.getElementById(valId).textContent = mc+Math.round(diff)+' over'; }
+    else                 { el.classList.add('bad');  document.getElementById(valId).textContent = mc+Math.round(diff)+' over'; }
+    document.getElementById(subId).textContent = label+' target: '+mc+Math.round(target)+' (day '+elapsed+')';
+  }
+  setCard('sb-min','sb-min-v','sb-min-s', pmT, minT, 'Min');
+  setCard('sb-max','sb-max-v','sb-max-s', pmT, maxT, 'Max');
+}
+
+function renderOv() {
+  const mc = T.cfg.cur||'EUR';
+  const hc = T.cfg.hcur||'NOK';
+  const rate = T.cfg.rate||1;
+  const elapsed = daysElapsed();
+  const pmT = (T.pocket||[]).reduce((s,e)=>s+toMain(e.amount,e.cur),0);
+  const htT = (T.hotels||[]).reduce((s,h)=>s+toMain(h.ppn*h.nights,h.cur),0);
+  const trT = (T.travel||[]).reduce((s,r)=>s+toMain(r.cost,r.cur),0);
+  const exT = (T.extras||[]).reduce((s,x)=>s+toMain(x.cost,x.cur),0);
+  const htD = (T.hotels||[]).reduce((s,h)=>s+Math.max(0,toMain(h.ppn*h.nights,h.cur)-payTotal(h.payments)),0);
+  const trD = (T.travel||[]).reduce((s,r)=>s+Math.max(0,toMain(r.cost,r.cur)-payTotal(r.payments)),0);
+  const exD = (T.extras||[]).reduce((s,x)=>s+Math.max(0,toMain(x.cost,x.cur)-payTotal(x.payments)),0);
+  const pmMin = T.cfg.min*T.cfg.days, pmMax = T.cfg.max*T.cfg.days;
+  const estMin = pmMin+htT+trT+exT, estMax = pmMax+htT+trT+exT;
+  const pmRemMin = Math.max(0,pmMin-pmT), pmRemMax = Math.max(0,pmMax-pmT);
+
+  document.getElementById('ov-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-lbl">Fixed costs</div><div class="stat-val">${mc}${Math.round(htT+trT)}</div><div class="stat-sub">hotels + travel</div></div>
+    <div class="stat-box"><div class="stat-lbl">Pocket spent</div><div class="stat-val">${mc}${Math.round(pmT)}</div><div class="stat-sub">day ${elapsed} of ${T.cfg.days}</div></div>
+    <div class="stat-box"><div class="stat-lbl">Extras budget</div><div class="stat-val">${mc}${Math.round(exT)}</div><div class="stat-sub">${(T.extras||[]).length} item${(T.extras||[]).length!==1?'s':''}</div></div>
+    <div class="stat-box"><div class="stat-lbl">Still to pay</div><div class="stat-val">${mc}${Math.round(htD+trD+exD)}</div><div class="stat-sub">all categories</div></div>`;
+
+  function pr(lbl, val, cls='', sub='') {
+    return `<div class="proj-row${cls?' '+cls:''}"><div class="proj-lbl">${lbl}</div><div class="proj-val${cls?' '+cls:''}">${val}${sub?` <span style="font-size:10px;color:var(--c-text3)">${sub}</span>`:''}</div></div>`;
+  }
+  document.getElementById('ov-est').innerHTML =
+    pr('Hotels', mc+Math.round(htT)) +
+    pr('Travel', mc+Math.round(trT)) +
+    pr('Extras <span class="badge-extra">outside daily</span>', mc+Math.round(exT)) +
+    pr('Pocket — min ('+mc+T.cfg.min+'/day × '+T.cfg.days+')', mc+Math.round(pmMin), 'ok') +
+    pr('Pocket — max ('+mc+T.cfg.max+'/day × '+T.cfg.days+')', mc+Math.round(pmMax), 'hi') +
+    '<div class="proj-sep"></div>' +
+    pr('Total (min scenario)', mc+Math.round(estMin), 'total ok', hc+Math.round(estMin*rate).toLocaleString()) +
+    pr('Total (max scenario)', mc+Math.round(estMax), 'total hi', hc+Math.round(estMax*rate).toLocaleString());
+
+  document.getElementById('ov-due').innerHTML =
+    pr('Hotels still to pay', mc+Math.round(htD), htD>0?'hi':'ok') +
+    pr('Travel still to pay', mc+Math.round(trD), trD>0?'hi':'ok') +
+    pr('Extras still to pay', mc+Math.round(exD), exD>0?'hi':'ok') +
+    pr('Pocket left (min)', mc+Math.round(pmRemMin), 'ok') +
+    pr('Pocket left (max)', mc+Math.round(pmRemMax), 'hi') +
+    '<div class="proj-sep"></div>' +
+    pr('Total still to go (min)', mc+Math.round(htD+trD+exD+pmRemMin), 'total') +
+    pr('Total still to go (max)', mc+Math.round(htD+trD+exD+pmRemMax), 'total');
+
+  const HCOLS=['#D85A30','#993C1D','#BA7517','#854F0B','#534AB7','#185FA5'];
+  const TCOLS={Plane:'#4A7AB8',Ferry:'#185FA5',Taxi:'#7A4AB8',Train:'#1D9E75',Bus:'#0F6E56',Other:'#888780'};
+  const ECOLS=['#7A4AB8','#5A2E8C','#9A5FCA'];
+
+  document.getElementById('ov-ht').innerHTML = (T.hotels||[]).length
+    ? (T.hotels||[]).map((h,i)=>{const d=Math.max(0,toMain(h.ppn*h.nights,h.cur)-payTotal(h.payments));return`<div class="item-row"><div class="dot" style="background:${HCOLS[i%HCOLS.length]}"></div><div class="item-main"><div class="item-name">${esc(h.name)}</div><div class="item-sub">${h.nights} nights · ${h.cur||mc}${h.ppn}/night${h.checkin?' · '+h.checkin:''}</div>${d>0?`<span class="unpaid-chip">${mc+Math.round(d)} to pay</span>`:''}</div><div class="item-amt">${mc+Math.round(toMain(h.ppn*h.nights,h.cur))}<span class="hcur">${hc+Math.round(toMain(h.ppn*h.nights,h.cur)*rate).toLocaleString()}</span></div></div>`;}).join('')
+    : '<div class="empty-state">No hotels added</div>';
+
+  document.getElementById('ov-tr').innerHTML = (T.travel||[]).length
+    ? (T.travel||[]).map(r=>{const d=Math.max(0,toMain(r.cost,r.cur)-payTotal(r.payments));return`<div class="item-row"><div class="dot" style="background:${TCOLS[r.type]||'#888'}"></div><div class="item-main"><div class="item-name">${esc(r.desc)}</div><div class="item-sub">${r.type}${r.date?' · '+r.date:''}</div>${d>0?`<span class="unpaid-chip">${mc+Math.round(d)} to pay</span>`:''}</div><div class="item-amt">${mc+Math.round(toMain(r.cost,r.cur))}<span class="hcur">${hc+Math.round(toMain(r.cost,r.cur)*rate).toLocaleString()}</span></div></div>`;}).join('')
+    : '<div class="empty-state">No travel added</div>';
+
+  document.getElementById('ov-ex').innerHTML = (T.extras||[]).length
+    ? (T.extras||[]).map((x,i)=>{const d=Math.max(0,toMain(x.cost,x.cur)-payTotal(x.payments));return`<div class="item-row"><div class="dot" style="background:${ECOLS[i%ECOLS.length]}"></div><div class="item-main"><div class="item-name">${esc(x.desc)}</div><div class="item-sub">${x.date?' · '+x.date:''}</div>${d>0?`<span class="unpaid-chip">${mc+Math.round(d)} to pay</span>`:''}</div><div class="item-amt">${mc+Math.round(toMain(x.cost,x.cur))}<span class="hcur">${hc+Math.round(toMain(x.cost,x.cur)*rate).toLocaleString()}</span></div></div>`;}).join('')
+    : '<div class="empty-state">No extras added</div>';
+}
+
+function renderPM() {
+  const mc = T.cfg.cur||'EUR';
+  const today = new Date().toISOString().split('T')[0];
+  const todayAmt = (T.pocket||[]).filter(e=>e.date===today).reduce((s,e)=>s+toMain(e.amount,e.cur),0);
+  const totAmt   = (T.pocket||[]).reduce((s,e)=>s+toMain(e.amount,e.cur),0);
+  const st = dayStatus(todayAmt);
+  document.getElementById('pm-today').textContent = mc+Math.round(todayAmt);
+  document.getElementById('pm-today-s').textContent = {ok:'On target',warn:'Near limit',over:'Over max',under:'Under min',empty:'Nothing yet'}[st];
+  document.getElementById('pm-total').textContent = mc+Math.round(totAmt);
+  document.getElementById('pm-total-s').textContent = T.cfg.days+'-day trip';
+  document.getElementById('pm-goal').textContent = mc+T.cfg.min+'–'+mc+T.cfg.max;
+
+  document.getElementById('dg-title').textContent = 'All ' + T.cfg.days + ' days';
+  document.getElementById('day-grid').innerHTML = Array.from({length:T.cfg.days},(_,i)=>{
+    const iso = dayISO(i);
+    const amt = (T.pocket||[]).filter(e=>e.date===iso).reduce((s,e)=>s+toMain(e.amount,e.cur),0);
+    const st  = dayStatus(amt);
+    return `<div class="day-cell day-${st}${selDay===i?' sel':''}" onclick="selectDay(${i})">
+      <div class="day-num">${dayLabel(i)}</div>
+      <div class="day-amt">${amt>0?mc+Math.round(amt):'—'}</div>
+    </div>`;
+  }).join('');
+
+  // Day detail
+  const dtEl = document.getElementById('dd-title');
+  const dbEl = document.getElementById('dd-badge');
+  const dbarEl = document.getElementById('dd-bar');
+  const dlistEl = document.getElementById('dd-list');
+  if (selDay !== null) {
+    const iso = dayISO(selDay);
+    const dayExps = (T.pocket||[]).filter(e=>e.date===iso);
+    const dayAmt  = dayExps.reduce((s,e)=>s+toMain(e.amount,e.cur),0);
+    const st = dayStatus(dayAmt);
+    dtEl.textContent = dayLabel(selDay);
+    const bmap = {ok:'badge-ok',warn:'badge-warn',over:'badge-over',under:'badge-under',empty:'badge-neutral'};
+    const btxt = {ok:'On target',warn:'Near limit',over:'Over max',under:'Under min',empty:'No spend'};
+    dbEl.innerHTML = `<span class="card-badge ${bmap[st]}">${btxt[st]}</span>`;
+    const pMax = T.cfg.max;
+    const pPct = pMax>0?Math.min((dayAmt/pMax)*100,100):0;
+    const pMin = pMax>0?(T.cfg.min/pMax)*100:33;
+    const col = {ok:'#4A8C3F',warn:'#C47A2A',over:'#B84040',under:'#4A7AB8',empty:'#555'}[st];
+    dbarEl.innerHTML = `<div style="position:relative;height:10px;border-radius:5px;background:var(--c-bg3);margin:8px 0 20px"><div style="position:absolute;width:${pMin}%;height:10px;background:var(--c-green-bg);border-radius:5px 0 0 5px"></div><div style="position:absolute;width:${pPct}%;height:8px;top:1px;background:${col};border-radius:4px;z-index:2"></div><div style="position:absolute;left:${pMin}%;width:1px;height:16px;top:-3px;background:var(--c-border2);z-index:3"></div><div style="position:absolute;left:${pMin}%;top:13px;font-size:9px;color:var(--c-text3);transform:translateX(-50%)">${mc+T.cfg.min}</div><div style="position:absolute;right:0;top:13px;font-size:9px;color:var(--c-text3)">${mc+T.cfg.max}</div></div><div style="font-size:11px;color:var(--c-text3);margin-bottom:6px">Spent <strong style="color:var(--c-text)">${mc+Math.round(dayAmt)}</strong> · target ${mc+T.cfg.min}–${mc+T.cfg.max}</div>`;
+    dlistEl.innerHTML = dayExps.length
+      ? dayExps.map(e=>`<div class="item-row"><div class="item-main"><div class="item-name">${esc(e.desc)}</div></div><div class="item-amt">${e.cur&&e.cur!==mc?e.cur+e.amount+' ≈ ':''}<span style="font-family:var(--font-mono)">${mc+Math.round(toMain(e.amount,e.cur))}</span></div><button class="del-btn" onclick="delPM(${e.id})">✕</button></div>`)
+        .join('')
+      : '<div class="empty-state">No expenses this day</div>';
+  } else {
+    dtEl.textContent = 'Select a day above';
+    dbEl.innerHTML = ''; dbarEl.innerHTML = ''; dlistEl.innerHTML = '';
+  }
+
+  const all = [...(T.pocket||[])].sort((a,b)=>b.id-a.id);
+  document.getElementById('pm-all').innerHTML = all.length
+    ? all.map(e=>`<div class="item-row"><div class="item-main"><div class="item-name">${esc(e.desc)}</div><div class="item-sub">${e.date||'—'}</div></div><div class="item-amt">${e.cur&&e.cur!==mc?e.cur+e.amount+' ≈ ':''}<span style="font-family:var(--font-mono)">${mc+Math.round(toMain(e.amount,e.cur))}</span></div><button class="del-btn" onclick="delPM(${e.id})">✕</button></div>`).join('')
+    : '<div class="empty-state">No expenses yet</div>';
+
+  // pre-fill today's date
+  if (!document.getElementById('pm-dt').value) document.getElementById('pm-dt').value = today;
+}
+
+function renderHt() {
+  const mc = T.cfg.cur||'EUR';
+  const hc = T.cfg.hcur||'NOK';
+  const rate = T.cfg.rate||1;
+  const HCOLS=['#D85A30','#993C1D','#BA7517','#854F0B','#534AB7','#185FA5'];
+  const htT = (T.hotels||[]).reduce((s,h)=>s+toMain(h.ppn*h.nights,h.cur),0);
+  const htP = (T.hotels||[]).reduce((s,h)=>s+payTotal(h.payments),0);
+  const htD = (T.hotels||[]).reduce((s,h)=>s+Math.max(0,toMain(h.ppn*h.nights,h.cur)-payTotal(h.payments)),0);
+  const nights = (T.hotels||[]).reduce((s,h)=>s+h.nights,0);
+  document.getElementById('ht-tot').textContent = mc+Math.round(htT);
+  document.getElementById('ht-nights').textContent = nights+' night'+(nights!==1?'s':'');
+  document.getElementById('ht-paid').textContent = mc+Math.round(htP);
+  document.getElementById('ht-due').textContent = mc+Math.round(Math.max(0,htD));
+
+  const el = document.getElementById('ht-list');
+  if (!(T.hotels||[]).length) { el.innerHTML='<div class="empty-state card">No hotels added yet</div>'; return; }
+  el.innerHTML = T.hotels.map((h,i)=>{
+    const cost = toMain(h.ppn*h.nights, h.cur);
+    const paid = payTotal(h.payments);
+    const due  = Math.max(0, cost - paid);
+    const pct  = cost>0 ? Math.min((paid/cost)*100,100) : 0;
+    const payForm = openPayHt[h.id] ? payFormHTML('ht', h.id) : '';
+    return `<div class="card">
+      <div class="card-head">
+        <div><div class="card-title">${esc(h.name)}</div><div style="font-size:11px;color:var(--c-text3);margin-top:2px">${h.nights} nights · ${h.cur||mc}${h.ppn}/night${h.checkin?' · check-in '+h.checkin:''}</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="del-btn" onclick="delHotel(${h.id})">✕</button></div>
+      </div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${pct>=100?'#4A8C3F':'#D85A30'}"></div></div>
+      <div class="pbar-labels"><span style="color:#7EC870">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${due>0?'#E88888':'#7EC870'}">${due>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
+      <div class="pay-chips">
+        ${(h.payments||[]).map(p=>`<span class="pay-chip">${mc+Math.round(toMain(p.amount,p.cur))}${p.note?' · '+esc(p.note):''}${p.date?' · '+p.date:''}<button onclick="delHtPay(${h.id},${p.id})">✕</button></span>`).join('')}
+        ${due>0?`<button class="btn-sm" onclick="togglePay('ht',${h.id})">+ Register payment</button>`:''}
+      </div>
+      ${payForm}
+    </div>`;
+  }).join('');
+}
+
+function renderTr() {
+  const mc = T.cfg.cur||'EUR';
+  const TCOLS={Plane:'#4A7AB8',Ferry:'#185FA5',Taxi:'#7A4AB8',Train:'#1D9E75',Bus:'#0F6E56',Other:'#888780'};
+  const trT = (T.travel||[]).reduce((s,r)=>s+toMain(r.cost,r.cur),0);
+  const trP = (T.travel||[]).reduce((s,r)=>s+payTotal(r.payments),0);
+  const trD = Math.max(0,trT-trP);
+  document.getElementById('tr-tot').textContent = mc+Math.round(trT);
+  document.getElementById('tr-cnt').textContent = (T.travel||[]).length+' item'+(T.travel.length!==1?'s':'');
+  document.getElementById('tr-paid').textContent = mc+Math.round(trP);
+  document.getElementById('tr-due').textContent = mc+Math.round(trD);
+
+  const el = document.getElementById('tr-list');
+  if (!(T.travel||[]).length) { el.innerHTML='<div class="empty-state card">No travel items yet</div>'; return; }
+  el.innerHTML = T.travel.map(r=>{
+    const cost = toMain(r.cost, r.cur);
+    const paid = payTotal(r.payments);
+    const due  = Math.max(0, cost - paid);
+    const pct  = cost>0 ? Math.min((paid/cost)*100,100) : 0;
+    const payForm = openPayTr[r.id] ? payFormHTML('tr', r.id) : '';
+    return `<div class="card">
+      <div class="card-head">
+        <div><div class="card-title">${esc(r.desc)}</div><div style="font-size:11px;color:var(--c-text3);margin-top:2px">${r.type}${r.date?' · '+r.date:''}</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="del-btn" onclick="delTravel(${r.id})">✕</button></div>
+      </div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${pct>=100?'#4A8C3F':'#4A7AB8'}"></div></div>
+      <div class="pbar-labels"><span style="color:#7EC870">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${due>0?'#E88888':'#7EC870'}">${due>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
+      <div class="pay-chips">
+        ${(r.payments||[]).map(p=>`<span class="pay-chip">${mc+Math.round(toMain(p.amount,p.cur))}${p.note?' · '+esc(p.note):''}${p.date?' · '+p.date:''}<button onclick="delTrPay(${r.id},${p.id})">✕</button></span>`).join('')}
+        ${due>0?`<button class="btn-sm" onclick="togglePay('tr',${r.id})">+ Register payment</button>`:''}
+      </div>
+      ${payForm}
+    </div>`;
+  }).join('');
+}
+
+function renderEx() {
+  const mc = T.cfg.cur||'EUR';
+  const ECOLS=['#7A4AB8','#5A2E8C','#9A5FCA'];
+  const exT = (T.extras||[]).reduce((s,x)=>s+toMain(x.cost,x.cur),0);
+  const exP = (T.extras||[]).reduce((s,x)=>s+payTotal(x.payments),0);
+  const exD = Math.max(0,exT-exP);
+  document.getElementById('ex-tot').textContent = mc+Math.round(exT);
+  document.getElementById('ex-paid').textContent = mc+Math.round(exP);
+  document.getElementById('ex-due').textContent = mc+Math.round(exD);
+
+  const el = document.getElementById('ex-list');
+  if (!(T.extras||[]).length) { el.innerHTML='<div class="empty-state card">No extras added yet</div>'; return; }
+  el.innerHTML = T.extras.map((x,i)=>{
+    const cost = toMain(x.cost, x.cur);
+    const paid = payTotal(x.payments);
+    const due  = Math.max(0, cost - paid);
+    const pct  = cost>0 ? Math.min((paid/cost)*100,100) : 0;
+    const payForm = openPayEx[x.id] ? payFormHTML('ex', x.id) : '';
+    return `<div class="card">
+      <div class="card-head">
+        <div><div class="card-title">${esc(x.desc)}</div><div style="font-size:11px;color:var(--c-text3);margin-top:2px">${x.date?' · '+x.date:''}</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="del-btn" onclick="delExtra(${x.id})">✕</button></div>
+      </div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${pct>=100?'#4A8C3F':'#7A4AB8'}"></div></div>
+      <div class="pbar-labels"><span style="color:#7EC870">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${due>0?'#E88888':'#7EC870'}">${due>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
+      <div class="pay-chips">
+        ${(x.payments||[]).map(p=>`<span class="pay-chip">${mc+Math.round(toMain(p.amount,p.cur))}${p.note?' · '+esc(p.note):''}${p.date?' · '+p.date:''}<button onclick="delExPay(${x.id},${p.id})">✕</button></span>`).join('')}
+        ${due>0?`<button class="btn-sm" onclick="togglePay('ex',${x.id})">+ Register payment</button>`:''}
+      </div>
+      ${payForm}
+    </div>`;
+  }).join('');
+}
+
+function payFormHTML(type, id) {
+  const mc = T.cfg.cur||'EUR';
+  const curs = curList();
+  const curOpts = curs.map(c=>`<option${c===mc?' selected':''}>${c}</option>`).join('');
+  const today = new Date().toISOString().split('T')[0];
+  return `<div class="pay-form-inline">
+    <div class="field-row3">
+      <div class="field"><label>Amount</label><input type="number" id="pay-a-${id}" placeholder="0" min="0" /></div>
+      <div class="field"><label>Currency</label><select id="pay-c-${id}">${curOpts}</select></div>
+      <div class="field"><label>Date</label><input type="date" id="pay-d-${id}" value="${today}" /></div>
+    </div>
+    <div class="field"><label>Note (optional)</label><input type="text" id="pay-n-${id}" placeholder="e.g. Deposit" /></div>
+    <button class="btn-sm accent" onclick="registerPay('${type}',${id})">Confirm payment</button>
+  </div>`;
+}
+
+function renderCfg() {
+  if (!T) return;
+  document.getElementById('cfg-name').value  = T.name;
+  document.getElementById('cfg-start').value = T.cfg.start||'';
+  document.getElementById('cfg-end').value   = T.cfg.end||'';
+  document.getElementById('cfg-min').value   = T.cfg.min;
+  document.getElementById('cfg-max').value   = T.cfg.max;
+  document.getElementById('cfg-cur').value   = T.cfg.cur||'EUR';
+  document.getElementById('cfg-hcur').value  = T.cfg.hcur||'NOK';
+  document.getElementById('cfg-rate').value  = T.cfg.rate||11.8;
+  updateDaysHint();
+}
+
+// ══════════════════════════════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════════════════════════════
+function addPM() {
+  const desc = document.getElementById('pm-d').value.trim();
+  const amt  = parseFloat(document.getElementById('pm-a').value);
+  const cur  = document.getElementById('pm-c').value;
+  const date = document.getElementById('pm-dt').value;
+  if (!desc || isNaN(amt) || amt <= 0) return;
+  if (!T.pocket) T.pocket = [];
+  T.pocket.push({ id: nid(T.pocket), desc, amount: amt, cur, date });
+  document.getElementById('pm-d').value = '';
+  document.getElementById('pm-a').value = '';
+  scheduleSave(); renderPM(); renderOv(); renderStatus();
+}
+function delPM(id) { T.pocket = T.pocket.filter(e=>e.id!==id); scheduleSave(); renderPM(); renderOv(); renderStatus(); }
+function selectDay(i) { selDay = selDay===i ? null : i; renderPM(); }
+
+function addHotel() {
+  const name = document.getElementById('hn').value.trim();
+  const ppn  = parseFloat(document.getElementById('hppn').value);
+  const cur  = document.getElementById('hc').value;
+  const nights = parseInt(document.getElementById('hni').value)||1;
+  const checkin = document.getElementById('hci').value;
+  if (!name || isNaN(ppn) || ppn<=0) return;
+  if (!T.hotels) T.hotels = [];
+  T.hotels.push({ id: nid(T.hotels), name, ppn, cur, nights, checkin, payments:[] });
+  document.getElementById('hn').value = ''; document.getElementById('hppn').value = '';
+  document.getElementById('hni').value = ''; document.getElementById('hci').value = '';
+  scheduleSave(); renderHt(); renderOv();
+}
+function delHotel(id) { T.hotels = T.hotels.filter(h=>h.id!==id); delete openPayHt[id]; scheduleSave(); renderHt(); renderOv(); }
+
+function addTravel() {
+  const desc = document.getElementById('trd').value.trim();
+  const type = document.getElementById('trt').value;
+  const cost = parseFloat(document.getElementById('tra').value);
+  const cur  = document.getElementById('trc').value;
+  const date = document.getElementById('trdt').value;
+  if (!desc || isNaN(cost) || cost<=0) return;
+  if (!T.travel) T.travel = [];
+  T.travel.push({ id: nid(T.travel), desc, type, cost, cur, date, payments:[] });
+  document.getElementById('trd').value = ''; document.getElementById('tra').value = '';
+  scheduleSave(); renderTr(); renderOv();
+}
+function delTravel(id) { T.travel = T.travel.filter(r=>r.id!==id); delete openPayTr[id]; scheduleSave(); renderTr(); renderOv(); }
+
+function addExtra() {
+  const desc = document.getElementById('exd').value.trim();
+  const cost = parseFloat(document.getElementById('exa').value);
+  const cur  = document.getElementById('exc').value;
+  const date = document.getElementById('exdt').value;
+  if (!desc || isNaN(cost) || cost<=0) return;
+  if (!T.extras) T.extras = [];
+  T.extras.push({ id: nid(T.extras), desc, cost, cur, date, payments:[] });
+  document.getElementById('exd').value = ''; document.getElementById('exa').value = '';
+  scheduleSave(); renderEx(); renderOv();
+}
+function delExtra(id) { T.extras = T.extras.filter(x=>x.id!==id); delete openPayEx[id]; scheduleSave(); renderEx(); renderOv(); }
+
+function togglePay(type, id) {
+  if (type==='ht') openPayHt[id] = !openPayHt[id];
+  if (type==='tr') openPayTr[id] = !openPayTr[id];
+  if (type==='ex') openPayEx[id] = !openPayEx[id];
+  if (type==='ht') renderHt();
+  if (type==='tr') renderTr();
+  if (type==='ex') renderEx();
+}
+
+function registerPay(type, id) {
+  const amt  = parseFloat(document.getElementById('pay-a-'+id).value);
+  const cur  = document.getElementById('pay-c-'+id).value;
+  const date = document.getElementById('pay-d-'+id).value;
+  const note = document.getElementById('pay-n-'+id).value.trim();
+  if (isNaN(amt) || amt<=0) return;
+  let item;
+  if (type==='ht') item = (T.hotels||[]).find(h=>h.id===id);
+  if (type==='tr') item = (T.travel||[]).find(r=>r.id===id);
+  if (type==='ex') item = (T.extras||[]).find(x=>x.id===id);
+  if (!item) return;
+  if (!item.payments) item.payments = [];
+  item.payments.push({ id: nid(item.payments), amount: amt, cur, date, note });
+  if (type==='ht') { openPayHt[id]=false; renderHt(); }
+  if (type==='tr') { openPayTr[id]=false; renderTr(); }
+  if (type==='ex') { openPayEx[id]=false; renderEx(); }
+  scheduleSave(); renderOv();
+}
+
+function delHtPay(hid, pid) { const h=(T.hotels||[]).find(h=>h.id===hid); if(h) h.payments=(h.payments||[]).filter(p=>p.id!==pid); scheduleSave(); renderHt(); renderOv(); }
+function delTrPay(rid, pid) { const r=(T.travel||[]).find(r=>r.id===rid); if(r) r.payments=(r.payments||[]).filter(p=>p.id!==pid); scheduleSave(); renderTr(); renderOv(); }
+function delExPay(xid, pid) { const x=(T.extras||[]).find(x=>x.id===xid); if(x) x.payments=(x.payments||[]).filter(p=>p.id!==pid); scheduleSave(); renderEx(); renderOv(); }
+
+function saveCfg() {
+  const start = document.getElementById('cfg-start').value;
+  const end   = document.getElementById('cfg-end').value;
+  const days  = calcDays(start, end) || T.cfg.days || 7;
+  T.name = document.getElementById('cfg-name').value.trim() || T.name;
+  T.cfg = {
+    start, end, days,
+    min:  parseFloat(document.getElementById('cfg-min').value)  || 200,
+    max:  parseFloat(document.getElementById('cfg-max').value)  || 300,
+    cur:  (document.getElementById('cfg-cur').value  || 'EUR').toUpperCase(),
+    hcur: (document.getElementById('cfg-hcur').value || 'NOK').toUpperCase(),
+    rate: parseFloat(document.getElementById('cfg-rate').value) || 11.8
+  };
+  scheduleSave();
+  tab('ov', document.querySelector('.tab-btn'));
+}
+
+// ══════════════════════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════════════════════
+function tab(name, el) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('on'));
+  document.getElementById('t-'+name).classList.add('on');
+  if (el) el.classList.add('on');
+  // re-render current tab's content
+  if (name==='ov') renderOv();
+  if (name==='pm') renderPM();
+  if (name==='ht') renderHt();
+  if (name==='tr') renderTr();
+  if (name==='ex') renderEx();
+  if (name==='cfg') renderCfg();
+}
+
+function show(id)    { document.getElementById(id).classList.add('active'); }
+function hide(id)    { const el=document.getElementById(id); el.classList.remove('active'); if(id==='loading') el.style.display='none'; }
+function hideAll()   { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); hide('loading'); }
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ══════════════════════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════════════════════
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
