@@ -40,6 +40,29 @@
   --font-mono:  'DM Mono', monospace;
 }
 
+body.light {
+  --c-bg:       #F5F3EF;
+  --c-bg2:      #ECEAE4;
+  --c-bg3:      #E2DFD8;
+  --c-border:   #D4D0C8;
+  --c-border2:  #C4C0B6;
+  --c-text:     #1A1917;
+  --c-text2:    #5A5752;
+  --c-text3:    #9A9590;
+  --c-accent:   #B88A3A;
+  --c-accent2:  #9A7230;
+  --c-green:    #3A7A30;
+  --c-green-bg: #D8EDD6;
+  --c-orange:   #B86A18;
+  --c-orange-bg:#F0E0C8;
+  --c-red:      #A43030;
+  --c-red-bg:   #F0D4D4;
+  --c-blue:     #3A6AA8;
+  --c-blue-bg:  #D4E4F4;
+  --c-purple:   #6A3AA8;
+  --c-purple-bg:#E4D4F4;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -274,6 +297,18 @@ body {
   transition: color 0.2s;
 }
 .btn-logout:hover { color: var(--c-text2); }
+.btn-theme {
+  background: none;
+  border: 1px solid var(--c-border2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--c-text3);
+  padding: 5px 9px;
+  transition: all 0.2s;
+  line-height: 1;
+}
+.btn-theme:hover { color: var(--c-text); border-color: var(--c-accent); }
 
 /* ── MODAL ────────────────────────────────────────── */
 .modal-overlay {
@@ -608,6 +643,7 @@ body {
   border-radius: 50%;
   flex-shrink: 0;
 }
+.sync-dot.neutral { background: var(--c-border2); }
 .sync-dot.ok { background: var(--c-green); }
 .sync-dot.syncing { background: var(--c-accent); animation: pulse 1s infinite; }
 .sync-dot.err { background: var(--c-red); }
@@ -676,22 +712,11 @@ select option { background: var(--c-bg3); }
       <p>Track vacation spending together</p>
     </div>
     <div class="login-field">
-      <label>Script URL</label>
-      <input type="url" id="li-url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" />
-      <small>Your Google Apps Script deployment URL</small>
-    </div>
-    <div class="login-field">
-      <label>Family Password</label>
-      <input type="password" id="li-pw" placeholder="Enter shared password" />
+      <label>Password</label>
+      <input type="password" id="li-pw" placeholder="Enter family password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
     </div>
     <button class="btn-primary" id="li-btn" onclick="doLogin()">Sign In</button>
     <div class="login-err" id="li-err"></div>
-    <div class="login-setup">
-      <strong style="color:var(--c-text2)">First time setup?</strong><br>
-      1. Open <code>apps_script.js</code> → deploy as Web App in Google Apps Script<br>
-      2. Paste the URL above · set your password in the script<br>
-      3. Everyone uses the same URL + password
-    </div>
   </div>
 </div>
 
@@ -703,6 +728,7 @@ select option { background: var(--c-bg3); }
       <div class="meta" id="trips-meta">Loading…</div>
     </div>
     <div style="display:flex;gap:6px;align-items:center">
+      <button class="btn-theme" onclick="toggleTheme()" id="theme-btn-trips" title="Toggle light/dark">🌙</button>
       <button class="btn-sm accent" onclick="openNewTrip()">+ New trip</button>
       <button class="btn-logout" onclick="logout()">Sign out</button>
     </div>
@@ -720,7 +746,10 @@ select option { background: var(--c-bg3); }
         <div class="app-trip-date" id="app-dates">—</div>
       </div>
     </div>
-    <button class="btn-sm" onclick="syncNow()" id="sync-btn">↻ Sync</button>
+    <div style="display:flex;gap:6px">
+      <button class="btn-theme" onclick="toggleTheme()" id="theme-btn-app" title="Toggle light/dark">🌙</button>
+      <button class="btn-sm" onclick="syncNow()" id="sync-btn">↻ Sync</button>
+    </div>
   </div>
 
   <div class="sync-bar">
@@ -947,6 +976,16 @@ const COMMON_CURS = ['EUR','NOK','USD','GBP','SEK','DKK','CHF','PLN'];
 // INIT
 // ══════════════════════════════════════════════════════════════
 function init() {
+  // Restore theme preference
+  if (localStorage.getItem('fvb_theme') === 'light') applyTheme('light');
+
+  // Check if already logged in
+  if (localStorage.getItem('fvb_loggedin') !== '1') {
+    hide('loading');
+    show('s-login');
+    return;
+  }
+
   hide('loading');
   loadFromServer()
     .then(() => { showTrips(); startAutoSync(); })
@@ -963,34 +1002,46 @@ function init() {
 // ══════════════════════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════════════════════
-async function doLogin() {
-  const url = document.getElementById('li-url').value.trim();
-  const pw  = document.getElementById('li-pw').value.trim();
-  if (!url || !pw) { showErr('Please fill in both fields'); return; }
-  const btn = document.getElementById('li-btn');
-  btn.disabled = true; btn.textContent = 'Connecting…';
+function doLogin() {
+  const pw = document.getElementById('li-pw').value.trim();
+  if (!pw) { showErr('Please enter the password'); return; }
+  if (pw !== PASSWORD) { showErr('Wrong password'); return; }
   showErr('');
-  try {
-    SCRIPT_URL = url; PASSWORD = pw;
-    await loadFromServer();
-    localStorage.setItem('fvb_auth', JSON.stringify({url, pw}));
-    btn.disabled = false; btn.textContent = 'Sign In';
-    showTrips();
-  } catch(e) {
-    btn.disabled = false; btn.textContent = 'Sign In';
-    SCRIPT_URL = ''; PASSWORD = '';
-    showErr(e.message || 'Could not connect. Check URL and password.');
-  }
+  localStorage.setItem('fvb_loggedin', '1');
+  hide('s-login');
+  show('loading');
+  loadFromServer()
+    .then(() => { hide('loading'); showTrips(); startAutoSync(); })
+    .catch(e => {
+      console.warn('Could not reach server, using local data:', e);
+      const local = localStorage.getItem('fvb_local');
+      if (local) { try { DB = JSON.parse(local); } catch(e){} }
+      if (!Array.isArray(DB.trips)) DB.trips = [];
+      hide('loading');
+      showTrips();
+      startAutoSync();
+    });
 }
 function showErr(msg) {
   const el = document.getElementById('li-err');
   el.textContent = msg; el.style.display = msg ? 'block' : 'none';
 }
 function logout() {
-  localStorage.removeItem('fvb_auth');
-  SCRIPT_URL = ''; PASSWORD = '';
+  localStorage.removeItem('fvb_loggedin');
   DB = {trips:[]}; T = null;
   hideAll(); show('s-login');
+}
+
+function applyTheme(theme) {
+  document.body.classList.toggle('light', theme === 'light');
+  const icon = theme === 'light' ? '🌙' : '☀️';
+  document.querySelectorAll('.btn-theme').forEach(b => b.textContent = icon);
+}
+function toggleTheme() {
+  const isLight = document.body.classList.contains('light');
+  const next = isLight ? 'dark' : 'light';
+  localStorage.setItem('fvb_theme', next);
+  applyTheme(next);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1746,8 +1797,8 @@ function tab(name, el) {
   if (name==='cfg') renderCfg();
 }
 
-function show(id)    { document.getElementById(id).classList.add('active'); }
-function hide(id)    { const el=document.getElementById(id); el.classList.remove('active'); if(id==='loading') el.style.display='none'; }
+function show(id)    { const el=document.getElementById(id); el.style.display=''; el.classList.add('active'); }
+function hide(id)    { const el=document.getElementById(id); el.classList.remove('active'); el.style.display='none'; }
 function hideAll()   { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); hide('loading'); }
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
