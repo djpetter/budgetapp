@@ -1431,7 +1431,7 @@ function renderOv() {
   const pmRemMin = Math.max(0,pmMin-pmT), pmRemMax = Math.max(0,pmMax-pmT);
 
   const dual = mc !== hc;
-  const inok = v => dual ? `<div class="stat-sub" style="font-family:var(--font-mono);margin-top:1px">${hc}${Math.round(v*rate).toLocaleString()}</div>` : '';
+  const inok = v => dual ? `<div class="stat-sub">${hc}${Math.round(v*rate).toLocaleString()}</div>` : '';
   const remDays = Math.max(0, T.cfg.days - elapsed);
   const remPocketMax = remDays * (T.cfg.max || 0);
 
@@ -1442,7 +1442,7 @@ function renderOv() {
     <div class="stat-box"><div class="stat-lbl">Still to pay</div><div class="stat-val">${mc}${Math.round(htD+trD+exD+remPocketMax).toLocaleString()}</div><div class="stat-sub">fixed + ${remDays}d pocket at max</div>${inok(htD+trD+exD+remPocketMax)}</div>`;
 
   function pr(lbl, val, cls='', sub='') {
-    return `<div class="proj-row${cls?' '+cls:''}"><div class="proj-lbl">${lbl}</div><div class="proj-val${cls?' '+cls:''}">${val}${sub?` <span style="font-size:10px;color:var(--c-text3)">${sub}</span>`:''}</div></div>`;
+    return `<div class="proj-row${cls?' '+cls:''}"><div class="proj-lbl">${lbl}</div><div class="proj-val${cls?' '+cls:''}">${val}${sub?`<div style="font-size:11px;color:var(--c-text3);font-family:var(--font-body);font-weight:400;margin-top:1px">${sub}</div>`:''}</div></div>`;
   }
   const n = dual ? v => hc+Math.round(v*rate).toLocaleString() : () => '';
   document.getElementById('ov-est').innerHTML =
