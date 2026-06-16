@@ -1154,7 +1154,7 @@ button, input, select, a {
 // CONFIG — will be set from localStorage after login
 // ══════════════════════════════════════════════════════════════
 let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw6RKVd3H-XYom1_gvpTo6lH8WK-dyEdhzfSQyqKDJZtB6TRo8KhN6LgW7-auzAWANj/exec';
-let PASSWORD = 'SummerDream2';
+let TOKEN = null;
 
 // ══════════════════════════════════════════════════════════════
 // STATE
@@ -1179,11 +1179,10 @@ const COMMON_CURS = ['EUR','NOK','USD','GBP','SEK','DKK','CHF','PLN'];
 // INIT
 // ══════════════════════════════════════════════════════════════
 function init() {
-  // Restore theme preference
   if (localStorage.getItem('fvb_theme') === 'light') applyTheme('light');
-
-  // Check if already logged in
-  if (localStorage.getItem('fvb_loggedin') !== '1') {
+  localStorage.removeItem('fvb_loggedin'); // clean up old auth key
+  TOKEN = localStorage.getItem('fvb_token');
+  if (!TOKEN) {
     hide('loading');
     show('s-login');
     return;
@@ -1193,6 +1192,7 @@ function init() {
   loadFromServer()
     .then(() => { showTrips(); startAutoSync(); })
     .catch(e => {
+      if (!TOKEN) return; // session expired — already redirected to login
       console.warn('Could not reach server, using local data:', e);
       const local = localStorage.getItem('fvb_local');
       if (local) { try { DB = JSON.parse(local); } catch(e){} }
@@ -1205,34 +1205,44 @@ function init() {
 // ══════════════════════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════════════════════
-function doLogin() {
+async function doLogin() {
   const pw = document.getElementById('li-pw').value.trim();
   if (!pw) { showErr('Please enter the password'); return; }
-  if (pw !== PASSWORD) { showErr('Wrong password'); return; }
+  const btn = document.getElementById('li-btn');
+  btn.disabled = true; btn.textContent = 'Signing in…';
   showErr('');
-  localStorage.setItem('fvb_loggedin', '1');
-  hide('s-login');
-  show('loading');
-  loadFromServer()
-    .then(() => { hide('loading'); showTrips(); startAutoSync(); })
-    .catch(e => {
-      console.warn('Could not reach server, using local data:', e);
-      const local = localStorage.getItem('fvb_local');
-      if (local) { try { DB = JSON.parse(local); } catch(e){} }
-      if (!Array.isArray(DB.trips)) DB.trips = [];
-      hide('loading');
-      showTrips();
-      startAutoSync();
-    });
+  try {
+    const res = await apiFetch({ action: 'auth', password: pw });
+    if (!res.ok) { showErr(res.error || 'Wrong password'); return; }
+    TOKEN = res.token;
+    localStorage.setItem('fvb_token', TOKEN);
+    if (res.data) { DB = res.data; }
+    if (!Array.isArray(DB.trips)) DB.trips = [];
+    hide('s-login');
+    showTrips();
+    startAutoSync();
+  } catch(e) {
+    showErr('Connection error. Please try again.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
 }
 function showErr(msg) {
   const el = document.getElementById('li-err');
   el.textContent = msg; el.style.display = msg ? 'block' : 'none';
 }
 function logout() {
-  localStorage.removeItem('fvb_loggedin');
+  localStorage.removeItem('fvb_token');
+  TOKEN = null;
   DB = {trips:[]}; T = null;
   hideAll(); show('s-login');
+}
+function handleSessionExpired() {
+  localStorage.removeItem('fvb_token');
+  TOKEN = null;
+  DB = {trips:[]}; T = null;
+  hideAll(); show('s-login');
+  showErr('Your session has expired. Please sign in again.');
 }
 
 function applyTheme(theme) {
@@ -1262,6 +1272,9 @@ async function loadFromServer() {
   setSyncStatus('syncing', 'Syncing…');
   try {
     const res = await apiFetch({ action: 'load' });
+    if (!res.ok && res.error === 'Invalid or expired session') {
+      handleSessionExpired(); throw new Error('Session expired');
+    }
     if (res.error) throw new Error(res.error);
     if (res.data) DB = res.data;
     else DB = { trips: [] };
@@ -1279,6 +1292,9 @@ async function saveToServer() {
   localStorage.setItem('fvb_local', JSON.stringify(DB));
   try {
     const res = await apiFetch({ action: 'save', data: DB });
+    if (!res.ok && res.error === 'Invalid or expired session') {
+      handleSessionExpired(); return;
+    }
     if (!res.ok) throw new Error(res.error || 'Write failed');
     setSyncStatus('ok', 'Saved ' + new Date().toLocaleTimeString());
     isDirty = false;
@@ -1320,7 +1336,7 @@ function startAutoSync() {
 }
 
 async function apiFetch(body) {
-  body.password = PASSWORD;
+  if (body.action !== 'auth') body.token = TOKEN;
   const ctrl = new AbortController();
   const timeout = setTimeout(() => ctrl.abort(), 15000);
   try {
