@@ -947,6 +947,7 @@ button, input, select, a {
   <!-- OVERVIEW -->
   <div class="tab-content on" id="t-ov">
     <div class="stat-grid" id="ov-stats"></div>
+    <div class="card"><div class="card-head"><span class="card-title">Total trip cost</span></div><div id="ov-total"></div></div>
     <div class="card"><div class="card-head"><span class="card-title">Estimated trip cost</span></div><div id="ov-est"></div></div>
     <div class="card"><div class="card-head"><span class="card-title">Still to pay</span></div><div id="ov-due"></div></div>
     <div class="card"><div class="card-head"><span class="card-title">Hotels</span></div><div id="ov-ht"></div></div>
@@ -1667,6 +1668,16 @@ function renderOv() {
     return `<div class="proj-row${cls?' '+cls:''}"><div class="proj-lbl">${lbl}</div><div class="proj-val${cls?' '+cls:''}">${val}${sub?`<div style="font-size:11px;color:var(--c-text3);font-family:var(--font-body);font-weight:400;margin-top:1px">${sub}</div>`:''}</div></div>`;
   }
   const n = dual ? v => hc+Math.round(v*rate).toLocaleString() : () => '';
+
+  const totalActual = pmT + htT + trT + exT;
+  document.getElementById('ov-total').innerHTML =
+    pr('Pocket money spent', mc+Math.round(pmT).toLocaleString(), '', n(pmT)) +
+    pr('Hotels', mc+Math.round(htT).toLocaleString(), '', n(htT)) +
+    pr('Travel', mc+Math.round(trT).toLocaleString(), '', n(trT)) +
+    pr('Extras', mc+Math.round(exT).toLocaleString(), '', n(exT)) +
+    '<div class="proj-sep"></div>' +
+    pr('Grand total', mc+Math.round(totalActual).toLocaleString(), 'total', n(totalActual));
+
   document.getElementById('ov-est').innerHTML =
     pr('Hotels', mc+Math.round(htT).toLocaleString(), '', n(htT)) +
     pr('Travel', mc+Math.round(trT).toLocaleString(), '', n(trT)) +
