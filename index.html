@@ -1791,8 +1791,8 @@ function renderHt() {
         <div><div class="card-title">${esc(h.name)}</div><div style="font-size:11px;color:var(--c-text3);margin-top:2px">${h.nights} nights · ${h.cur||mc}${h.ppn}/night${h.checkin?' · check-in '+h.checkin:''}</div></div>
         <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="edit-btn" onclick="toggleEdit('ht',${h.id})" title="Edit" aria-label="Edit hotel">✎</button><button class="del-btn" onclick="delHotel(${h.id})" aria-label="Delete hotel">✕</button></div>
       </div>
-      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${pct>=100?'var(--c-green)':'var(--c-orange)'}"></div></div>
-      <div class="pbar-labels"><span style="color:var(--c-green)">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${due>0?'var(--c-red)':'var(--c-green)'}">${due>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${Math.round(due)===0?'var(--c-green)':'var(--c-orange)'}"></div></div>
+      <div class="pbar-labels"><span style="color:var(--c-green)">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${Math.round(due)>0?'var(--c-red)':'var(--c-green)'}">${Math.round(due)>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
       <div class="pay-chips">
         ${(h.payments||[]).map(p=>`<span class="pay-chip">${mc+Math.round(toMain(p.amount,p.cur))}${p.note?' · '+esc(p.note):''}${p.date?' · '+p.date:''}<button onclick="delHtPay(${h.id},${p.id})" aria-label="Remove payment">✕</button></span>`).join('')}
         ${due>0?`<button class="btn-sm" onclick="togglePay('ht',${h.id})">+ Register payment</button>`:''}
@@ -1827,11 +1827,11 @@ function renderTr() {
         <div><div class="card-title">${esc(r.desc)}</div><div style="font-size:11px;color:var(--c-text3);margin-top:2px">${r.type}${r.date?' · '+r.date:''}</div></div>
         <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="edit-btn" onclick="toggleEdit('tr',${r.id})" title="Edit" aria-label="Edit travel item">✎</button><button class="del-btn" onclick="delTravel(${r.id})" aria-label="Delete travel item">✕</button></div>
       </div>
-      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${pct>=100?'var(--c-green)':'var(--c-blue)'}"></div></div>
-      <div class="pbar-labels"><span style="color:var(--c-green)">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${due>0?'var(--c-red)':'var(--c-green)'}">${due>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${Math.round(due)===0?'var(--c-green)':'var(--c-blue)'}"></div></div>
+      <div class="pbar-labels"><span style="color:var(--c-green)">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${Math.round(due)>0?'var(--c-red)':'var(--c-green)'}">${Math.round(due)>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
       <div class="pay-chips">
         ${(r.payments||[]).map(p=>`<span class="pay-chip">${mc+Math.round(toMain(p.amount,p.cur))}${p.note?' · '+esc(p.note):''}${p.date?' · '+p.date:''}<button onclick="delTrPay(${r.id},${p.id})" aria-label="Remove payment">✕</button></span>`).join('')}
-        ${due>0?`<button class="btn-sm" onclick="togglePay('tr',${r.id})">+ Register payment</button>`:''}
+        ${Math.round(due)>0?`<button class="btn-sm" onclick="togglePay('tr',${r.id})">+ Register payment</button>`:''}
       </div>
       ${payForm}
       ${openEditTr[r.id] ? editFormHTML_travel(r) : ''}
@@ -1862,11 +1862,11 @@ function renderEx() {
         <div><div class="card-title">${esc(x.desc)}</div><div style="font-size:11px;color:var(--c-text3);margin-top:2px">${x.date?' · '+x.date:''}</div></div>
         <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:14px">${mc+Math.round(cost)}</span><button class="edit-btn" onclick="toggleEdit('ex',${x.id})" title="Edit" aria-label="Edit extra">✎</button><button class="del-btn" onclick="delExtra(${x.id})" aria-label="Delete extra">✕</button></div>
       </div>
-      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${pct>=100?'var(--c-green)':'var(--c-purple)'}"></div></div>
-      <div class="pbar-labels"><span style="color:var(--c-green)">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${due>0?'var(--c-red)':'var(--c-green)'}">${due>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${Math.round(due)===0?'var(--c-green)':'var(--c-purple)'}"></div></div>
+      <div class="pbar-labels"><span style="color:var(--c-green)">Paid: ${mc+Math.round(paid)}</span><span>${pct.toFixed(0)}%</span><span style="color:${Math.round(due)>0?'var(--c-red)':'var(--c-green)'}">${Math.round(due)>0?mc+Math.round(due)+' to pay':'Fully paid'}</span></div>
       <div class="pay-chips">
         ${(x.payments||[]).map(p=>`<span class="pay-chip">${mc+Math.round(toMain(p.amount,p.cur))}${p.note?' · '+esc(p.note):''}${p.date?' · '+p.date:''}<button onclick="delExPay(${x.id},${p.id})" aria-label="Remove payment">✕</button></span>`).join('')}
-        ${due>0?`<button class="btn-sm" onclick="togglePay('ex',${x.id})">+ Register payment</button>`:''}
+        ${Math.round(due)>0?`<button class="btn-sm" onclick="togglePay('ex',${x.id})">+ Register payment</button>`:''}
       </div>
       ${payForm}
       ${openEditEx[x.id] ? editFormHTML_extra(x) : ''}
